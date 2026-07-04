@@ -1,0 +1,15 @@
+# ponytail: local Docker Postgres replaces RDS for now; AWS deploy deferred
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: edu
+      POSTGRES_PASSWORD: edu
+      POSTGRES_DB: edu
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+volumes:
+  dbdata:

@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Teacher {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String?  @map("password_hash")
+  googleId     String?  @unique @map("google_id")
+  name         String
+  school       String?
+  plan         String   @default("free") // 'free' | 'pro'
+  addons       String[] @default([])
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  memberships OrgMembership[]
+  classes     Class[]
+  lessons     Lesson[]
+  assignments Assignment[]
+
+  @@map("teachers")
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  members OrgMembership[]
+
+  @@map("organizations")
+}
+
+model OrgMembership {
+  id        String   @id @default(uuid())
+  orgId     String   @map("org_id")
+  teacherId String   @map("teacher_id")
+  role      String   @default("admin") // 'admin' | 'teacher'
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  teacher Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, teacherId])
+  @@map("org_memberships")
+}
+
+model Class {
+  id         String   @id @default(uuid())
+  teacherId  String   @map("teacher_id")
+  name       String
+  grade      String?
+  schoolYear String?  @map("school_year")
+  isDefault  Boolean  @default(false) @map("is_default")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  pupils      Pupil[]
+  assignments Assignment[]
+
+  @@map("classes")
+}
+
+model Pupil {
+  id            String   @id @default(uuid())
+  classId       String   @map("class_id")
+  name          String
+  studentNumber String   @map("student_number")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  class   Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  results GameResult[]
+
+  @@unique([classId, studentNumber]) // no duplicate student numbers within a class
+  @@map("pupils")
+}
+
+model Lesson {
+  id         String   @id @default(uuid())
+  teacherId  String   @map("teacher_id")
+  title      String
+  subject    String
+  grade      String
+  gameFormat String   @map("game_format") // e.g. 'space-race', 'sniper-shot'
+  isPublic   Boolean  @default(false) @map("is_public")
+  playCount  Int      @default(0) @map("play_count")
+  isLocked   Boolean  @default(false) @map("is_locked")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  questions   Question[]
+  assignments Assignment[]
+
+  @@map("lessons")
+}
+
+model Question {
+  id           String   @id @default(uuid())
+  lessonId     String   @map("lesson_id")
+  order        Int
+  type         String // 'mcq' | 'true-false' | 'map-pin'
+  text         String
+  imageUrl     String?  @map("image_url")
+  timeLimitSec Int      @default(30) @map("time_limit_sec")
+  config       Json // MCQ: { options, correct } · TrueFalse: { correct } · MapPin: { lat, lng, toleranceKm }
+  isApproved   Boolean  @default(true) @map("is_approved")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  lesson  Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  answers ResultAnswer[]
+
+  @@map("questions")
+}
+
+model Assignment {
+  id            String    @id @default(uuid())
+  lessonId      String    @map("lesson_id")
+  classId       String    @map("class_id")
+  teacherId     String    @map("teacher_id")
+  shareLink     String    @unique @map("share_link")
+  dueDate       DateTime? @map("due_date")
+  scoringConfig Json      @default("{\"pointsPerCorrect\": 100, \"timeBonus\": false, \"streakMultiplier\": false}") @map("scoring_config")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  lesson  Lesson       @relation(fields: [lessonId], references: [id])
+  class   Class        @relation(fields: [classId], references: [id])
+  teacher Teacher      @relation(fields: [teacherId], references: [id])
+  results GameResult[]
+
+  @@map("assignments")
+}
+
+model GameResult {
+  id             String   @id @default(uuid())
+  assignmentId   String   @map("assignment_id")
+  pupilId        String?  @map("pupil_id")
+  studentName    String   @map("student_name")
+  studentNumber  String   @map("student_number")
+  totalScore     Int      @map("total_score")
+  totalCorrect   Int      @map("total_correct")
+  totalQuestions Int      @map("total_questions")
+  completedAt    DateTime @default(now()) @map("completed_at")
+
+  assignment Assignment     @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  pupil      Pupil?         @relation(fields: [pupilId], references: [id], onDelete: SetNull)
+  answers    ResultAnswer[]
+
+  @@unique([assignmentId, pupilId]) // one result per pupil per assignment (NULL pupilId = free-text entry, not constrained)
+  @@map("game_results")
+}
+
+model ResultAnswer {
+  id            String  @id @default(uuid())
+  gameResultId  String  @map("game_result_id")
+  questionId    String  @map("question_id")
+  answer        Json
+  correct       Boolean
+  timeMs        Int     @map("time_ms")
+  attemptNumber Int     @default(1) @map("attempt_number")
+
+  gameResult GameResult @relation(fields: [gameResultId], references: [id], onDelete: Cascade)
+  question   Question   @relation(fields: [questionId], references: [id])
+
+  @@map("result_answers")
+}
