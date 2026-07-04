@@ -78,6 +78,15 @@ export class LessonsService {
     });
   }
 
+  async updateQuestion(teacherId: string, questionId: string, dto: CreateQuestionDto) {
+    await this.findOwnedQuestion(teacherId, questionId);
+    validateQuestionConfig(dto.type, dto.config);
+    return this.prisma.question.update({
+      where: { id: questionId },
+      data: { ...dto, config: dto.config as Prisma.InputJsonValue },
+    });
+  }
+
   async removeQuestion(teacherId: string, questionId: string) {
     const question = await this.findOwnedQuestion(teacherId, questionId);
     await this.prisma.question.delete({ where: { id: question.id } });

@@ -112,6 +112,21 @@ describe('Lessons (e2e)', () => {
     expect(res.body.questions.map((q: { id: string }) => q.id)).toEqual([tfId, mcqId]);
   });
 
+  it('PATCH /questions/:id updates a question and re-validates config', async () => {
+    const res = await request(app.getHttpServer())
+      .patch(`/api/questions/${mcqId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ type: 'mcq', text: '2 + 2 = ? (updated)', config: { options: ['3', '4', '5', '6'], correct: 2 } })
+      .expect(200);
+    expect(res.body).toMatchObject({ text: '2 + 2 = ? (updated)', config: { correct: 2 } });
+
+    await request(app.getHttpServer())
+      .patch(`/api/questions/${mcqId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ type: 'mcq', text: 'Bad', config: { options: ['1', '2'], correct: 0 } })
+      .expect(400);
+  });
+
   it('another teacher cannot access this lesson (404, not leaked)', () =>
     request(app.getHttpServer())
       .get(`/api/lessons/${lessonId}`)

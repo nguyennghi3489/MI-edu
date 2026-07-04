@@ -32,6 +32,24 @@
     "questions": "câu hỏi",
     "back": "← Bài học của tôi",
     "delete": "Xoá bài học",
-    "noQuestions": "Chưa có câu hỏi nào"
+    "noQuestions": "Chưa có câu hỏi nào",
+    "addQuestion": "Thêm câu hỏi",
+    "editQuestion": "Sửa câu hỏi",
+    "edit": "Sửa câu hỏi",
+    "confirmTitle": "Xác nhận",
+    "confirmDeleteLesson": "Bạn có chắc muốn xoá bài học này? Tất cả câu hỏi sẽ bị xoá theo.",
+    "confirmDeleteQuestion": "Bạn có chắc muốn xoá câu hỏi này?",
+    "confirmYes": "Xoá",
+    "questionText": "Nội dung câu hỏi",
+    "mcq": "Trắc nghiệm",
+    "trueFalse": "Đúng - Sai",
+    "option": "Lựa chọn",
+    "true": "Đúng",
+    "false": "Sai",
+    "timeLimit": "Thời gian",
+    "save": "Lưu câu hỏi",
+    "deleteQuestion": "Xoá câu hỏi",
+    "moveUp": "Di chuyển lên",
+    "moveDown": "Di chuyển xuống"
   }
 }

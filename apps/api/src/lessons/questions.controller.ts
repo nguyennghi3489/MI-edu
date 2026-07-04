@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Param, Patch, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards';
-import { ReorderQuestionDto } from './dto';
+import { CreateQuestionDto, ReorderQuestionDto } from './dto';
 import { LessonsService } from './lessons.service';
 
 @UseGuards(JwtAuthGuard)
@@ -11,6 +11,11 @@ export class QuestionsController {
 
   private teacherId(req: Request) {
     return (req.user as { id: string }).id;
+  }
+
+  @Patch(':id')
+  update(@Req() req: Request, @Param('id') id: string, @Body() dto: CreateQuestionDto) {
+    return this.lessons.updateQuestion(this.teacherId(req), id, dto);
   }
 
   @Patch(':id/order')

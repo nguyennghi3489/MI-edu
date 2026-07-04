@@ -12,11 +12,10 @@ interface Lesson {
 
 const { t } = useI18n()
 const auth = useAuthStore()
-const token = useCookie('token')
 
 const { data: lessons } = await useAsyncData(
   'lessons',
-  () => $fetch<Lesson[]>('/api/lessons', { headers: { Authorization: `Bearer ${token.value}` } }),
+  () => useApi<Lesson[]>('/api/lessons'),
   { default: () => [] },
 )
 const search = ref('')

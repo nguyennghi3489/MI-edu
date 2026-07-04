@@ -2,7 +2,6 @@
 definePageMeta({ middleware: 'auth' })
 
 const { t } = useI18n()
-const token = useCookie('token')
 
 const title = ref('')
 const subject = ref(SUBJECTS[0].name)
@@ -14,9 +13,8 @@ async function submit() {
   busy.value = true
   error.value = ''
   try {
-    const lesson = await $fetch<{ id: string }>('/api/lessons', {
+    const lesson = await useApi<{ id: string }>('/api/lessons', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token.value}` },
       body: { title: title.value, subject: subject.value, grade: grade.value, gameFormat: 'space-race' },
     })
     await navigateTo(`/lessons/${lesson.id}`)
