@@ -15,7 +15,7 @@ async function submit() {
   try {
     const lesson = await useApi<{ id: string }>('/api/lessons', {
       method: 'POST',
-      body: { title: title.value, subject: subject.value, grade: grade.value, gameFormat: 'space-race' },
+      body: { title: title.value, subject: subject.value, grade: grade.value, gameFormat: 'quiz' },
     })
     await navigateTo(`/lessons/${lesson.id}`)
   } catch (e: any) {

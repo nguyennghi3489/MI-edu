@@ -36,8 +36,13 @@ describe('Assignments (e2e)', () => {
     const lesson = await request(app.getHttpServer())
       .post('/api/lessons')
       .set('Authorization', `Bearer ${token}`)
-      .send({ title: 'Phép trừ', subject: 'Toán', grade: '3', gameFormat: 'space-race' });
+      .send({ title: 'Phép trừ', subject: 'Toán', grade: '3', gameFormat: 'quiz' });
     lessonId = lesson.body.id;
+
+    await request(app.getHttpServer())
+      .post(`/api/lessons/${lessonId}/questions`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ type: 'true-false', text: '2 + 2 = 4', config: { correct: true } });
   });
 
   afterAll(async () => {
@@ -93,8 +98,25 @@ describe('Assignments (e2e)', () => {
     const res = await request(app.getHttpServer())
       .get(`/api/assignments/${assignmentId}/public`)
       .expect(200);
-    expect(res.body).toEqual({ title: 'Phép trừ', subject: 'Toán', questionCount: 0 });
+    expect(res.body).toEqual({ title: 'Phép trừ', subject: 'Toán', questionCount: 1 });
   });
+
+  it('GET /assignments/:id/questions returns the lesson questions for a valid game token', async () => {
+    const enter = await request(app.getHttpServer())
+      .post(`/api/assignments/${assignmentId}/enter`)
+      .send({ name: 'Bé An', studentNumber: '1' })
+      .expect(201);
+
+    const res = await request(app.getHttpServer())
+      .get(`/api/assignments/${assignmentId}/questions`)
+      .set('Authorization', `Bearer ${enter.body.accessToken}`)
+      .expect(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].config).toEqual({ correct: true });
+  });
+
+  it('GET /assignments/:id/questions returns 401 without a valid token', () =>
+    request(app.getHttpServer()).get(`/api/assignments/${assignmentId}/questions`).expect(401));
 
   it('POST /assignments/:id/enter returns 403 once the due date has passed', async () => {
     await request(app.getHttpServer())

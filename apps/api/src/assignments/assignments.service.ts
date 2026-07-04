@@ -1,4 +1,11 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -77,6 +84,23 @@ export class AssignmentsService {
     return {
       accessToken: this.jwt.sign({ assignmentId: id, pupilId }, { expiresIn: '2h' }),
     };
+  }
+
+  async getQuestions(id: string, token: string) {
+    let payload: { assignmentId: string };
+    try {
+      payload = this.jwt.verify(token);
+    } catch {
+      throw new UnauthorizedException();
+    }
+    if (payload.assignmentId !== id) throw new UnauthorizedException();
+
+    const assignment = await this.prisma.assignment.findUnique({
+      where: { id },
+      include: { lesson: { include: { questions: { orderBy: { order: 'asc' } } } } },
+    });
+    if (!assignment) throw new NotFoundException('Không tìm thấy bài giao');
+    return assignment.lesson.questions;
   }
 
   private async assertOwn(teacherId: string, id: string) {

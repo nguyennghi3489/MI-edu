@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards';
 import { AssignmentsService } from './assignments.service';
@@ -32,5 +32,11 @@ export class AssignmentsController {
   @Post(':id/enter')
   enter(@Param('id') id: string, @Body() dto: EnterAssignmentDto) {
     return this.assignments.enter(id, dto);
+  }
+
+  @Get(':id/questions')
+  getQuestions(@Param('id') id: string, @Headers('authorization') auth?: string) {
+    const token = auth?.replace('Bearer ', '') ?? '';
+    return this.assignments.getQuestions(id, token);
   }
 }

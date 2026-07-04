@@ -66,6 +66,13 @@
     "start": "Bắt đầu chơi 🚀",
     "notFound": "Không tìm thấy bài giao",
     "getReady": "Chuẩn bị...",
-    "previewBadge": "Chế độ xem thử"
+    "previewBadge": "Chế độ xem thử",
+    "question": "Câu hỏi",
+    "of": "/",
+    "score": "Điểm",
+    "correct": "Số câu đúng",
+    "time": "Thời gian",
+    "playAgain": "Chơi lại",
+    "review": "Xem lại"
   }
 }
