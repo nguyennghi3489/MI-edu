@@ -1,0 +1,42 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* Hearth design tokens — see design_handoff/README.md for full system */
+@theme {
+  --font-display: 'Fraunces', serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-playful: 'Baloo 2', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* forest shade ramp derived from the single Hearth brand hex — Nuxt UI's
+     color system (ui.colors.primary) needs a full 50-950 scale to work */
+  --color-forest-50: color-mix(in srgb, #2f4a3a 5%, white);
+  --color-forest-100: color-mix(in srgb, #2f4a3a 12%, white);
+  --color-forest-200: color-mix(in srgb, #2f4a3a 24%, white);
+  --color-forest-300: color-mix(in srgb, #2f4a3a 40%, white);
+  --color-forest-400: color-mix(in srgb, #2f4a3a 70%, white);
+  --color-forest-500: #2f4a3a;
+  --color-forest-600: color-mix(in srgb, #2f4a3a 88%, black);
+  --color-forest-700: color-mix(in srgb, #2f4a3a 75%, black);
+  --color-forest-800: color-mix(in srgb, #2f4a3a 62%, black);
+  --color-forest-900: color-mix(in srgb, #2f4a3a 50%, black);
+  --color-forest-950: color-mix(in srgb, #2f4a3a 35%, black);
+  --color-forest: var(--color-forest-500);
+  --color-moss: #5c7a52;
+  --color-cream: #f5efe3;
+  --color-linen: #faf6ec;
+  --color-bark: #3a2e26;
+  --color-stone: #7a736b;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-bark);
+  font-family: var(--font-sans);
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  color: var(--color-forest);
+}

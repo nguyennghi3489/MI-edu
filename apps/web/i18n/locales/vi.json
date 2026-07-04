@@ -1,0 +1,24 @@
+{
+  "app": {
+    "name": "Lớp Vui"
+  },
+  "auth": {
+    "loginTitle": "Đăng nhập",
+    "signupTitle": "Đăng ký tài khoản giáo viên",
+    "email": "Email",
+    "password": "Mật khẩu",
+    "name": "Họ và tên",
+    "school": "Trường (không bắt buộc)",
+    "login": "Đăng nhập",
+    "signup": "Đăng ký",
+    "logout": "Đăng xuất",
+    "google": "Tiếp tục với Google",
+    "noAccount": "Chưa có tài khoản? Đăng ký",
+    "haveAccount": "Đã có tài khoản? Đăng nhập",
+    "failed": "Có lỗi xảy ra, vui lòng thử lại"
+  },
+  "lessons": {
+    "title": "Thư viện bài học",
+    "empty": "Chưa có bài học nào — tạo bài học đầu tiên của bạn!"
+  }
+}
