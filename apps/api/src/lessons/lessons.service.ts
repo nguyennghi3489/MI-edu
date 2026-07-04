@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLessonDto, CreateQuestionDto, UpdateLessonDto } from './dto';
@@ -39,12 +39,40 @@ export class LessonsService {
   async detail(teacherId: string, id: string) {
     const lesson = await this.prisma.lesson.findUnique({
       where: { id },
-      include: { questions: { orderBy: { order: 'asc' } } },
+      include: {
+        questions: { orderBy: { order: 'asc' } },
+        assignments: { orderBy: { createdAt: 'desc' } },
+      },
     });
     if (!lesson || lesson.teacherId !== teacherId) {
       throw new NotFoundException('Không tìm thấy bài học');
     }
     return lesson;
+  }
+
+  async duplicate(teacherId: string, id: string) {
+    const lesson = await this.assertOwnLesson(teacherId, id);
+    const questions = await this.prisma.question.findMany({ where: { lessonId: id }, orderBy: { order: 'asc' } });
+    return this.prisma.lesson.create({
+      data: {
+        teacherId,
+        title: `${lesson.title} (bản sao)`,
+        subject: lesson.subject,
+        grade: lesson.grade,
+        gameFormat: lesson.gameFormat,
+        questions: {
+          create: questions.map((q) => ({
+            order: q.order,
+            type: q.type,
+            text: q.text,
+            imageUrl: q.imageUrl,
+            timeLimitSec: q.timeLimitSec,
+            config: q.config as Prisma.InputJsonValue,
+          })),
+        },
+      },
+      include: { questions: true },
+    });
   }
 
   create(teacherId: string, dto: CreateLessonDto) {
@@ -62,7 +90,10 @@ export class LessonsService {
   }
 
   async addQuestion(teacherId: string, lessonId: string, dto: CreateQuestionDto) {
-    await this.assertOwnLesson(teacherId, lessonId);
+    const lesson = await this.assertOwnLesson(teacherId, lessonId);
+    if (lesson.isLocked) {
+      throw new ForbiddenException('Bài học đã được giao, không thể chỉnh sửa câu hỏi');
+    }
     validateQuestionConfig(dto.type, dto.config);
     const last = await this.prisma.question.findFirst({
       where: { lessonId },
@@ -79,7 +110,10 @@ export class LessonsService {
   }
 
   async updateQuestion(teacherId: string, questionId: string, dto: CreateQuestionDto) {
-    await this.findOwnedQuestion(teacherId, questionId);
+    const question = await this.findOwnedQuestion(teacherId, questionId);
+    if (question.lesson.isLocked) {
+      throw new ForbiddenException('Bài học đã được giao, không thể chỉnh sửa câu hỏi');
+    }
     validateQuestionConfig(dto.type, dto.config);
     return this.prisma.question.update({
       where: { id: questionId },
@@ -89,11 +123,17 @@ export class LessonsService {
 
   async removeQuestion(teacherId: string, questionId: string) {
     const question = await this.findOwnedQuestion(teacherId, questionId);
+    if (question.lesson.isLocked) {
+      throw new ForbiddenException('Bài học đã được giao, không thể chỉnh sửa câu hỏi');
+    }
     await this.prisma.question.delete({ where: { id: question.id } });
   }
 
   async reorderQuestion(teacherId: string, questionId: string, newOrder: number) {
     const question = await this.findOwnedQuestion(teacherId, questionId);
+    if (question.lesson.isLocked) {
+      throw new ForbiddenException('Bài học đã được giao, không thể chỉnh sửa câu hỏi');
+    }
     const siblings = await this.prisma.question.findMany({
       where: { lessonId: question.lessonId },
       orderBy: { order: 'asc' },

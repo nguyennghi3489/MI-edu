@@ -10,12 +10,26 @@ interface Question {
   config: { options: string[]; correct: number } | { correct: boolean }
 }
 
+interface Assignment {
+  id: string
+  classId: string
+  shareLink: string
+  dueDate: string | null
+}
+
 interface LessonDetail {
   id: string
   title: string
   subject: string
   grade: string
+  isLocked: boolean
   questions: Question[]
+  assignments: Assignment[]
+}
+
+interface ClassOption {
+  id: string
+  name: string
 }
 
 const QUESTION_TYPES = [
@@ -41,6 +55,56 @@ function typeInfo(type: string) {
 async function removeLesson() {
   await useApi(`/api/lessons/${lesson.value!.id}`, { method: 'DELETE' })
   await navigateTo('/lessons')
+}
+
+async function duplicateLesson() {
+  const copy = await useApi<{ id: string }>(`/api/lessons/${lesson.value!.id}/duplicate`, { method: 'POST' })
+  await navigateTo(`/lessons/${copy.id}`)
+}
+
+const assignOpen = ref(false)
+const assignBusy = ref(false)
+const assignError = ref('')
+const classes = ref<ClassOption[]>([])
+const assignClassId = ref('')
+const assignDueDate = ref('')
+
+async function openAssign() {
+  assignError.value = ''
+  assignDueDate.value = ''
+  classes.value = await useApi<ClassOption[]>('/api/classes')
+  assignClassId.value = classes.value[0]?.id ?? ''
+  assignOpen.value = true
+}
+
+async function submitAssign() {
+  assignError.value = ''
+  assignBusy.value = true
+  try {
+    await useApi('/api/assignments', {
+      method: 'POST',
+      body: {
+        lessonId: lesson.value!.id,
+        classId: assignClassId.value,
+        dueDate: assignDueDate.value ? new Date(assignDueDate.value).toISOString() : undefined,
+      },
+    })
+    await refresh()
+    assignOpen.value = false
+  } catch (e: any) {
+    assignError.value = e.data?.message ?? t('auth.failed')
+  } finally {
+    assignBusy.value = false
+  }
+}
+
+const copied = ref(false)
+async function copyShareLink() {
+  const link = lesson.value!.assignments[0]?.shareLink
+  if (!link) return
+  await navigator.clipboard.writeText(`${location.origin}${link}`)
+  copied.value = true
+  setTimeout(() => (copied.value = false), 2000)
 }
 
 async function removeQuestion(id: string) {
@@ -148,21 +212,36 @@ async function saveQuestion() {
 <template>
   <main class="max-w-2xl mx-auto p-6">
     <NuxtLink to="/lessons" class="text-moss text-sm">{{ t('lessons.back') }}</NuxtLink>
-    <div class="flex items-center justify-between mt-2 mb-6">
+    <div class="flex items-center justify-between mt-2 mb-2">
       <div>
-        <h1 class="text-3xl">{{ lesson.title }}</h1>
+        <h1 class="text-3xl flex items-center gap-2">
+          {{ lesson.title }}
+          <UBadge v-if="lesson.isLocked" color="warning" variant="subtle">{{ t('lessons.locked') }}</UBadge>
+        </h1>
         <p class="text-stone text-sm">{{ lesson.subject }} · {{ t('lessons.grade') }} {{ lesson.grade }}</p>
       </div>
-      <UButton
-        color="error"
-        variant="ghost"
-        @click="askConfirm(t('lessons.confirmDeleteLesson'), removeLesson)"
-      >
-        {{ t('lessons.delete') }}
+      <div class="flex gap-2">
+        <UButton variant="outline" @click="duplicateLesson">{{ t('lessons.duplicate') }}</UButton>
+        <UButton
+          color="error"
+          variant="ghost"
+          @click="askConfirm(t('lessons.confirmDeleteLesson'), removeLesson)"
+        >
+          {{ t('lessons.delete') }}
+        </UButton>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 mb-6">
+      <UButton size="sm" @click="openAssign">{{ t('lessons.assign') }}</UButton>
+      <UButton v-if="lesson.assignments[0]" size="sm" variant="outline" @click="copyShareLink">
+        {{ copied ? t('lessons.copied') : t('lessons.copyLink') }}
       </UButton>
     </div>
 
-    <UButton class="mb-4" block size="lg" @click="openAdd">{{ t('lessons.addQuestion') }}</UButton>
+    <UButton class="mb-4" block size="lg" :disabled="lesson.isLocked" @click="openAdd">
+      {{ t('lessons.addQuestion') }}
+    </UButton>
 
     <p v-if="lesson.questions.length === 0" class="text-stone">{{ t('lessons.noQuestions') }}</p>
     <ol v-else class="flex flex-col gap-2">
@@ -172,7 +251,12 @@ async function saveQuestion() {
         class="flex items-center gap-3 p-3 rounded-xl bg-linen border border-black/10"
       >
         <span class="font-mono text-sm text-stone">{{ i + 1 }}</span>
-        <button type="button" class="flex-1 truncate text-left cursor-pointer" @click="openEdit(q)">
+        <button
+          type="button"
+          class="flex-1 truncate text-left cursor-pointer"
+          :disabled="lesson.isLocked"
+          @click="openEdit(q)"
+        >
           {{ q.text }}
         </button>
         <UBadge :style="{ background: typeInfo(q.type).soft, color: typeInfo(q.type).color }" variant="subtle">
@@ -182,7 +266,7 @@ async function saveQuestion() {
           <UButton
             size="xs"
             variant="ghost"
-            :disabled="i === 0"
+            :disabled="lesson.isLocked || i === 0"
             :aria-label="t('lessons.moveUp')"
             @click="move(q, -1)"
           >
@@ -191,17 +275,26 @@ async function saveQuestion() {
           <UButton
             size="xs"
             variant="ghost"
-            :disabled="i === lesson.questions.length - 1"
+            :disabled="lesson.isLocked || i === lesson.questions.length - 1"
             :aria-label="t('lessons.moveDown')"
             @click="move(q, 1)"
           >
             ▼
           </UButton>
-          <UButton size="xs" variant="ghost" :aria-label="t('lessons.edit')" @click="openEdit(q)">✏️</UButton>
+          <UButton
+            size="xs"
+            variant="ghost"
+            :disabled="lesson.isLocked"
+            :aria-label="t('lessons.edit')"
+            @click="openEdit(q)"
+          >
+            ✏️
+          </UButton>
           <UButton
             size="xs"
             variant="ghost"
             color="error"
+            :disabled="lesson.isLocked"
             :aria-label="t('lessons.deleteQuestion')"
             @click="askConfirm(t('lessons.confirmDeleteQuestion'), () => removeQuestion(q.id))"
           >
@@ -276,6 +369,27 @@ async function saveQuestion() {
       </template>
       <template #footer>
         <UButton block size="lg" :loading="saving" @click="saveQuestion">{{ t('lessons.save') }}</UButton>
+      </template>
+    </UModal>
+
+    <UModal v-model:open="assignOpen" :title="t('lessons.assign')">
+      <template #body>
+        <div class="flex flex-col gap-4">
+          <UFormField :label="t('lessons.class')">
+            <USelect
+              v-model="assignClassId"
+              class="w-full"
+              :items="classes.map((c) => ({ label: c.name, value: c.id }))"
+            />
+          </UFormField>
+          <UFormField :label="t('lessons.dueDate')">
+            <UInput v-model="assignDueDate" type="date" class="w-full" />
+          </UFormField>
+          <p v-if="assignError" class="text-red-600 text-sm">{{ assignError }}</p>
+        </div>
+      </template>
+      <template #footer>
+        <UButton block size="lg" :loading="assignBusy" @click="submitAssign">{{ t('lessons.assign') }}</UButton>
       </template>
     </UModal>
 

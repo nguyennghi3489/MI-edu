@@ -50,6 +50,13 @@
     "save": "Lưu câu hỏi",
     "deleteQuestion": "Xoá câu hỏi",
     "moveUp": "Di chuyển lên",
-    "moveDown": "Di chuyển xuống"
+    "moveDown": "Di chuyển xuống",
+    "duplicate": "Nhân bản bài học",
+    "locked": "Đã giao 🔒",
+    "assign": "Giao bài",
+    "class": "Lớp",
+    "dueDate": "Hạn nộp (không bắt buộc)",
+    "copyLink": "Chia sẻ link",
+    "copied": "Đã sao chép ✓"
   }
 }

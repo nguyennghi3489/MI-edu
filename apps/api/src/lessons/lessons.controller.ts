@@ -42,4 +42,9 @@ export class LessonsController {
   addQuestion(@Req() req: Request, @Param('id') id: string, @Body() dto: CreateQuestionDto) {
     return this.lessons.addQuestion(this.teacherId(req), id, dto);
   }
+
+  @Post(':id/duplicate')
+  duplicate(@Req() req: Request, @Param('id') id: string) {
+    return this.lessons.duplicate(this.teacherId(req), id);
+  }
 }
