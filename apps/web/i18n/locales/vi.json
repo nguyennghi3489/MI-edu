@@ -18,7 +18,20 @@
     "failed": "Có lỗi xảy ra, vui lòng thử lại"
   },
   "lessons": {
-    "title": "Thư viện bài học",
-    "empty": "Chưa có bài học nào — tạo bài học đầu tiên của bạn!"
+    "title": "Bài học của tôi",
+    "empty": "Chưa có bài học nào",
+    "emptyHint": "Tạo bài học đầu tiên của bạn!",
+    "createFirst": "Tạo bài học đầu tiên!",
+    "create": "Tạo bài học",
+    "cancel": "Huỷ",
+    "all": "Tất cả",
+    "searchPlaceholder": "Tìm bài học...",
+    "lessonTitle": "Tiêu đề",
+    "subject": "Môn học",
+    "grade": "Lớp",
+    "questions": "câu hỏi",
+    "back": "← Bài học của tôi",
+    "delete": "Xoá bài học",
+    "noQuestions": "Chưa có câu hỏi nào"
   }
 }
