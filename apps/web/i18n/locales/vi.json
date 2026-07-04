@@ -52,11 +52,20 @@
     "moveUp": "Di chuyển lên",
     "moveDown": "Di chuyển xuống",
     "duplicate": "Nhân bản bài học",
+    "preview": "Xem thử",
     "locked": "Đã giao 🔒",
     "assign": "Giao bài",
     "class": "Lớp",
     "dueDate": "Hạn nộp (không bắt buộc)",
     "copyLink": "Chia sẻ link",
     "copied": "Đã sao chép ✓"
+  },
+  "play": {
+    "name": "Họ và tên",
+    "studentNumber": "Số thứ tự",
+    "start": "Bắt đầu chơi 🚀",
+    "notFound": "Không tìm thấy bài giao",
+    "getReady": "Chuẩn bị...",
+    "previewBadge": "Chế độ xem thử"
   }
 }

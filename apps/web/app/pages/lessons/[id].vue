@@ -237,6 +237,9 @@ async function saveQuestion() {
       <UButton v-if="lesson.assignments[0]" size="sm" variant="outline" @click="copyShareLink">
         {{ copied ? t('lessons.copied') : t('lessons.copyLink') }}
       </UButton>
+      <UButton size="sm" variant="outline" :to="`/play?lesson=${lesson.id}`" target="_blank">
+        {{ t('lessons.preview') }}
+      </UButton>
     </div>
 
     <UButton class="mb-4" block size="lg" :disabled="lesson.isLocked" @click="openAdd">

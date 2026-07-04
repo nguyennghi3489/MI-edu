@@ -1,11 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateAssignmentDto } from './dto';
+import { CreateAssignmentDto, EnterAssignmentDto } from './dto';
 
 @Injectable()
 export class AssignmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwt: JwtService,
+  ) {}
 
   async create(teacherId: string, dto: CreateAssignmentDto) {
     await this.assertOwnLesson(teacherId, dto.lessonId);
@@ -33,6 +37,46 @@ export class AssignmentsService {
       where: { id: assignment.id },
       data: { dueDate: dueDate ? new Date(dueDate) : null },
     });
+  }
+
+  async getPublic(id: string) {
+    const assignment = await this.prisma.assignment.findUnique({
+      where: { id },
+      include: { lesson: { include: { _count: { select: { questions: true } } } } },
+    });
+    if (!assignment) throw new NotFoundException('Không tìm thấy bài giao');
+    return {
+      title: assignment.lesson.title,
+      subject: assignment.lesson.subject,
+      questionCount: assignment.lesson._count.questions,
+    };
+  }
+
+  async enter(id: string, dto: EnterAssignmentDto) {
+    const assignment = await this.prisma.assignment.findUnique({
+      where: { id },
+      include: { class: { include: { pupils: true } } },
+    });
+    if (!assignment) throw new NotFoundException('Không tìm thấy bài giao');
+    if (assignment.dueDate && assignment.dueDate < new Date()) {
+      throw new ForbiddenException('Bài tập đã hết hạn');
+    }
+
+    let pupilId: string | undefined;
+    const roster = assignment.class.pupils;
+    if (roster.length > 0) {
+      const pupil = roster.find((p) => p.studentNumber === dto.studentNumber);
+      if (!pupil) throw new BadRequestException('Không tìm thấy số thứ tự trong lớp');
+      const existing = await this.prisma.gameResult.findUnique({
+        where: { assignmentId_pupilId: { assignmentId: id, pupilId: pupil.id } },
+      });
+      if (existing) throw new ConflictException('Bạn đã hoàn thành bài tập này');
+      pupilId = pupil.id;
+    }
+
+    return {
+      accessToken: this.jwt.sign({ assignmentId: id, pupilId }, { expiresIn: '2h' }),
+    };
   }
 
   private async assertOwn(teacherId: string, id: string) {

@@ -88,4 +88,91 @@ describe('Assignments (e2e)', () => {
       .expect(200);
     expect(res.body.dueDate).toBe(dueDate);
   });
+
+  it('GET /assignments/:id/public returns lesson title/subject/questionCount, no answers', async () => {
+    const res = await request(app.getHttpServer())
+      .get(`/api/assignments/${assignmentId}/public`)
+      .expect(200);
+    expect(res.body).toEqual({ title: 'Phép trừ', subject: 'Toán', questionCount: 0 });
+  });
+
+  it('POST /assignments/:id/enter returns 403 once the due date has passed', async () => {
+    await request(app.getHttpServer())
+      .patch(`/api/assignments/${assignmentId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ dueDate: '2020-01-01T00:00:00.000Z' })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .post(`/api/assignments/${assignmentId}/enter`)
+      .send({ name: 'Bé An', studentNumber: '5' })
+      .expect(403);
+  });
+
+  it('POST /assignments/:id/enter accepts free-text name+number when the roster is empty', async () => {
+    // reset dueDate to the future so entry isn't blocked by the expiry set above
+    await request(app.getHttpServer())
+      .patch(`/api/assignments/${assignmentId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ dueDate: '2099-01-01T00:00:00.000Z' })
+      .expect(200);
+
+    const res = await request(app.getHttpServer())
+      .post(`/api/assignments/${assignmentId}/enter`)
+      .send({ name: 'Bé An', studentNumber: '5' })
+      .expect(201);
+    expect(res.body.accessToken).toBeTruthy();
+  });
+
+  describe('with a non-empty roster', () => {
+    let rosterAssignmentId: string;
+    let pupilStudentNumber: string;
+
+    beforeAll(async () => {
+      const cls = await prisma.class.findUniqueOrThrow({ where: { id: classId } });
+      const pupil = await prisma.pupil.create({
+        data: { classId: cls.id, name: 'Bé Minh', studentNumber: '12' },
+      });
+      pupilStudentNumber = pupil.studentNumber;
+
+      const assignment = await request(app.getHttpServer())
+        .post('/api/assignments')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ lessonId, classId })
+        .expect(201);
+      rosterAssignmentId = assignment.body.id;
+    });
+
+    it('returns 400 when the student number is not on the roster', () =>
+      request(app.getHttpServer())
+        .post(`/api/assignments/${rosterAssignmentId}/enter`)
+        .send({ name: 'Ai đó', studentNumber: '999' })
+        .expect(400));
+
+    it('returns a JWT for a valid student number', () =>
+      request(app.getHttpServer())
+        .post(`/api/assignments/${rosterAssignmentId}/enter`)
+        .send({ name: 'Bé Minh', studentNumber: pupilStudentNumber })
+        .expect(201)
+        .expect((res) => expect(res.body.accessToken).toBeTruthy()));
+
+    it('returns 409 on a second submission attempt after the game is complete', async () => {
+      const pupil = await prisma.pupil.findFirstOrThrow({ where: { studentNumber: pupilStudentNumber } });
+      await prisma.gameResult.create({
+        data: {
+          assignmentId: rosterAssignmentId,
+          pupilId: pupil.id,
+          studentName: 'Bé Minh',
+          studentNumber: pupilStudentNumber,
+          totalScore: 100,
+          totalCorrect: 1,
+          totalQuestions: 1,
+        },
+      });
+      await request(app.getHttpServer())
+        .post(`/api/assignments/${rosterAssignmentId}/enter`)
+        .send({ name: 'Bé Minh', studentNumber: pupilStudentNumber })
+        .expect(409);
+    });
+  });
 });

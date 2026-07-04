@@ -23,5 +23,6 @@ import { LocalStrategy } from './local.strategy';
     // ponytail: Google strategy only when creds exist — passport-google throws at construction without them
     ...(process.env.GOOGLE_CLIENT_ID ? [GoogleStrategy] : []),
   ],
+  exports: [JwtModule],
 })
 export class AuthModule {}

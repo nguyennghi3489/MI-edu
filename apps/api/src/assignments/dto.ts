@@ -1,4 +1,4 @@
-import { IsISO8601, IsOptional, IsUUID } from 'class-validator';
+import { IsISO8601, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateAssignmentDto {
   @IsUUID()
@@ -16,4 +16,14 @@ export class UpdateAssignmentDto {
   @IsOptional()
   @IsISO8601()
   dueDate?: string;
+}
+
+export class EnterAssignmentDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  studentNumber: string;
 }
