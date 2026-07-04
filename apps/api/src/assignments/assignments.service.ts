@@ -62,7 +62,7 @@ export class AssignmentsService {
   async enter(id: string, dto: EnterAssignmentDto) {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id },
-      include: { class: { include: { pupils: true } } },
+      include: { class: { include: { enrollments: { include: { pupil: true } } } } },
     });
     if (!assignment) throw new NotFoundException('Không tìm thấy bài giao');
     if (assignment.dueDate && assignment.dueDate < new Date()) {
@@ -70,7 +70,7 @@ export class AssignmentsService {
     }
 
     let pupilId: string | undefined;
-    const roster = assignment.class.pupils;
+    const roster = assignment.class.enrollments.map((e) => e.pupil);
     if (roster.length > 0) {
       const pupil = roster.find((p) => p.studentNumber === dto.studentNumber);
       if (!pupil) throw new BadRequestException('Không tìm thấy số thứ tự trong lớp');

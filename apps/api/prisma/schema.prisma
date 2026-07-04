@@ -32,6 +32,7 @@ model Organization {
   createdAt DateTime @default(now()) @map("created_at")
 
   members OrgMembership[]
+  pupils  Pupil[]
 
   @@map("organizations")
 }
@@ -60,7 +61,7 @@ model Class {
   createdAt  DateTime @default(now()) @map("created_at")
 
   teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  pupils      Pupil[]
+  enrollments Enrollment[]
   assignments Assignment[]
 
   @@map("classes")
@@ -68,16 +69,30 @@ model Class {
 
 model Pupil {
   id            String   @id @default(uuid())
-  classId       String   @map("class_id")
+  orgId         String   @map("org_id")
   name          String
   studentNumber String   @map("student_number")
   createdAt     DateTime @default(now()) @map("created_at")
 
-  class   Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
-  results GameResult[]
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+  results     GameResult[]
 
-  @@unique([classId, studentNumber]) // no duplicate student numbers within a class
+  @@unique([orgId, studentNumber]) // no duplicate student numbers within an org
   @@map("pupils")
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  classId   String   @map("class_id")
+  pupilId   String   @map("pupil_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  pupil Pupil @relation(fields: [pupilId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, pupilId]) // a pupil can't be enrolled twice in the same class
+  @@map("enrollments")
 }
 
 model Lesson {

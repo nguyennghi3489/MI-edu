@@ -152,9 +152,11 @@ describe('Assignments (e2e)', () => {
 
     beforeAll(async () => {
       const cls = await prisma.class.findUniqueOrThrow({ where: { id: classId } });
+      const membership = await prisma.orgMembership.findFirstOrThrow({ where: { teacherId: cls.teacherId } });
       const pupil = await prisma.pupil.create({
-        data: { classId: cls.id, name: 'Bé Minh', studentNumber: '12' },
+        data: { orgId: membership.orgId, name: 'Bé Minh', studentNumber: '12' },
       });
+      await prisma.enrollment.create({ data: { classId: cls.id, pupilId: pupil.id } });
       pupilStudentNumber = pupil.studentNumber;
 
       const assignment = await request(app.getHttpServer())
