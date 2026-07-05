@@ -1,5 +1,7 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'auth' })
+import { errorMessage } from '~/utils/errorMessage'
+
+definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
 const { t } = useI18n()
 
@@ -19,7 +21,7 @@ async function submit() {
     })
     await navigateTo(`/lessons/${lesson.id}`)
   } catch (e: any) {
-    error.value = e.data?.message ?? t('auth.failed')
+    error.value = errorMessage(e, t)
   } finally {
     busy.value = false
   }

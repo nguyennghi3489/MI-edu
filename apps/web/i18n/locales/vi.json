@@ -2,6 +2,11 @@
   "app": {
     "name": "Lớp Vui"
   },
+  "nav": {
+    "lessons": "Bài học",
+    "classes": "Lớp học",
+    "pupils": "Học sinh"
+  },
   "auth": {
     "loginTitle": "Đăng nhập",
     "signupTitle": "Đăng ký tài khoản giáo viên",
@@ -107,6 +112,26 @@
     "correct": "Số câu đúng",
     "time": "Thời gian",
     "playAgain": "Chơi lại",
-    "review": "Xem lại"
+    "review": "Xem lại",
+    "submitted": "Kết quả đã được lưu ✓",
+    "submitFailed": "Không lưu được kết quả, thử lại"
+  },
+  "plan": {
+    "limitReached": "Đã đạt giới hạn gói miễn phí. Nâng cấp để dùng thêm."
+  },
+  "results": {
+    "title": "Kết quả",
+    "back": "← Bài học",
+    "submissions": "Lượt nộp",
+    "avgScore": "Điểm TB",
+    "avgAccuracy": "Độ chính xác TB",
+    "empty": "Chưa có học sinh nào nộp bài",
+    "name": "Họ và tên",
+    "studentNumber": "Số thứ tự",
+    "score": "Điểm",
+    "correct": "Số câu đúng",
+    "completedAt": "Nộp lúc",
+    "byQuestion": "Theo từng câu hỏi",
+    "needsReview": "⚠️ Cần ôn"
   }
 }

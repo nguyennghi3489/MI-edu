@@ -1,5 +1,7 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'auth' })
+import { errorMessage } from '~/utils/errorMessage'
+
+definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
 interface Pupil {
   id: string
@@ -37,7 +39,7 @@ async function addPupil() {
     await refresh()
     open.value = false
   } catch (e: any) {
-    error.value = e.data?.message ?? t('auth.failed')
+    error.value = errorMessage(e, t)
   } finally {
     busy.value = false
   }

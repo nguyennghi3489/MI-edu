@@ -2,6 +2,8 @@ export default defineNuxtConfig({
   compatibilityDate: "2026-07-04",
   modules: ["@pinia/nuxt", "@nuxtjs/i18n", "@nuxt/ui"],
   css: ["~/assets/css/main.css"],
+  // ponytail: one config bumps every Nuxt UI component (buttons, inputs, badges) off the tiny 'md' default
+  ui: { theme: { defaultVariants: { size: "lg" } } },
   // ponytail: Hearth is light-only for teacher screens; dark theme is bespoke to the student game, not a color-mode toggle
   colorMode: { preference: "light", fallback: "light" },
   app: {

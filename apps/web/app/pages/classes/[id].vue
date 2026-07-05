@@ -1,5 +1,7 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'auth' })
+import { errorMessage } from '~/utils/errorMessage'
+
+definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
 interface Pupil {
   id: string
@@ -67,7 +69,7 @@ async function addPupil() {
     await refresh()
     addOpen.value = false
   } catch (e: any) {
-    addError.value = e.data?.message ?? t('auth.failed')
+    addError.value = errorMessage(e, t)
   } finally {
     addBusy.value = false
   }
@@ -112,7 +114,7 @@ async function confirmImport() {
     await refresh()
     importOpen.value = false
   } catch (e: any) {
-    importError.value = e.data?.message ?? t('auth.failed')
+    importError.value = errorMessage(e, t)
   } finally {
     importBusy.value = false
   }

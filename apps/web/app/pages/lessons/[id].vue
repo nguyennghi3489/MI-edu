@@ -1,5 +1,7 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'auth' })
+import { errorMessage } from '~/utils/errorMessage'
+
+definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
 interface Question {
   id: string
@@ -57,9 +59,15 @@ async function removeLesson() {
   await navigateTo('/lessons')
 }
 
+const duplicateError = ref('')
 async function duplicateLesson() {
-  const copy = await useApi<{ id: string }>(`/api/lessons/${lesson.value!.id}/duplicate`, { method: 'POST' })
-  await navigateTo(`/lessons/${copy.id}`)
+  duplicateError.value = ''
+  try {
+    const copy = await useApi<{ id: string }>(`/api/lessons/${lesson.value!.id}/duplicate`, { method: 'POST' })
+    await navigateTo(`/lessons/${copy.id}`)
+  } catch (e: any) {
+    duplicateError.value = errorMessage(e, t)
+  }
 }
 
 const assignOpen = ref(false)
@@ -202,7 +210,7 @@ async function saveQuestion() {
     open.value = false
     resetForm()
   } catch (e: any) {
-    formError.value = e.data?.message ?? t('auth.failed')
+    formError.value = errorMessage(e, t)
   } finally {
     saving.value = false
   }
@@ -231,11 +239,20 @@ async function saveQuestion() {
         </UButton>
       </div>
     </div>
+    <p v-if="duplicateError" class="text-red-600 text-sm mb-2">{{ duplicateError }}</p>
 
     <div class="flex items-center gap-2 mb-6">
       <UButton size="sm" @click="openAssign">{{ t('lessons.assign') }}</UButton>
       <UButton v-if="lesson.assignments[0]" size="sm" variant="outline" @click="copyShareLink">
         {{ copied ? t('lessons.copied') : t('lessons.copyLink') }}
+      </UButton>
+      <UButton
+        v-if="lesson.assignments[0]"
+        size="sm"
+        variant="outline"
+        :to="`/assignments/${lesson.assignments[0].id}/results`"
+      >
+        {{ t('results.title') }}
       </UButton>
       <UButton size="sm" variant="outline" :to="`/play?lesson=${lesson.id}`" target="_blank">
         {{ t('lessons.preview') }}

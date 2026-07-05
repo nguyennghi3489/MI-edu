@@ -29,6 +29,11 @@
   --color-stone: #7a736b;
 }
 
+html {
+  /* ponytail: 18px base instead of 16px — scales every rem-based Tailwind text/spacing utility at once */
+  font-size: 18px;
+}
+
 body {
   background: var(--color-cream);
   color: var(--color-bark);

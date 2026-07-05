@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
 interface Lesson {
   id: string
@@ -11,7 +11,6 @@ interface Lesson {
 }
 
 const { t } = useI18n()
-const auth = useAuthStore()
 
 const { data: lessons } = await useAsyncData(
   'lessons',
@@ -28,21 +27,13 @@ const filtered = computed(() =>
     return matchesSearch && matchesSubject
   }),
 )
-
-async function logout() {
-  auth.logout()
-  await navigateTo('/login')
-}
 </script>
 
 <template>
   <main class="max-w-3xl mx-auto p-6">
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-3xl">{{ t('lessons.title') }}</h1>
-      <div class="flex gap-2">
-        <UButton to="/lessons/new">{{ t('lessons.create') }}</UButton>
-        <UButton variant="ghost" @click="logout">{{ t('auth.logout') }}</UButton>
-      </div>
+      <UButton to="/lessons/new">{{ t('lessons.create') }}</UButton>
     </div>
 
     <UInput
