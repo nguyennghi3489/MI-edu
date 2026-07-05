@@ -95,7 +95,6 @@
   },
   "pupils": {
     "title": "Học sinh trong trường",
-    "back": "← Lớp học của tôi",
     "empty": "Chưa có học sinh nào",
     "add": "Thêm học sinh",
     "name": "Họ và tên",

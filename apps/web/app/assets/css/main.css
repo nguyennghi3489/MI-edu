@@ -3,10 +3,10 @@
 
 /* Hearth design tokens — see design_handoff/README.md for full system */
 @theme {
-  --font-display: 'Fraunces', serif;
-  --font-sans: 'Inter', sans-serif;
-  --font-playful: 'Baloo 2', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: "Fraunces", serif;
+  --font-sans: "Inter", sans-serif;
+  --font-playful: "Baloo 2", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
   /* forest shade ramp derived from the single Hearth brand hex — Nuxt UI's
      color system (ui.colors.primary) needs a full 50-950 scale to work */
@@ -30,8 +30,8 @@
 }
 
 html {
-  /* ponytail: 18px base instead of 16px — scales every rem-based Tailwind text/spacing utility at once */
-  font-size: 18px;
+  /* ponytail: 22.5px base (18px x 1.25) — scales every rem-based Tailwind text/spacing utility, including UButton sizing, at once */
+  font-size: 20px;
 }
 
 body {
@@ -42,6 +42,6 @@ body {
 
 h1 {
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: 700;
   color: var(--color-forest);
 }

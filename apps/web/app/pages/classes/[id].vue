@@ -122,17 +122,15 @@ async function confirmImport() {
 </script>
 
 <template>
-  <main class="max-w-2xl mx-auto p-6">
-    <NuxtLink to="/classes" class="text-moss text-sm">{{ t('classes.back') }}</NuxtLink>
-    <h1 class="text-3xl mt-2 mb-1">{{ klass.name }}</h1>
-    <p class="text-stone text-sm mb-6">
-      {{ klass.grade ?? '' }} <span v-if="klass.grade && klass.schoolYear">·</span> {{ klass.schoolYear ?? '' }}
-    </p>
-
-    <div class="flex gap-2 mb-4">
+  <main class="max-w-6xl mx-auto p-8">
+    <NuxtLink to="/classes" class="text-moss text-sm mb-2 inline-block">{{ t('classes.back') }}</NuxtLink>
+    <PageHeader :title="klass.name">
+      <template #subtitle>
+        {{ klass.grade ?? '' }} <span v-if="klass.grade && klass.schoolYear">·</span> {{ klass.schoolYear ?? '' }}
+      </template>
       <UButton size="sm" @click="openAdd">{{ t('classes.addPupil') }}</UButton>
       <UButton size="sm" variant="outline" @click="openImport">{{ t('classes.importCsv') }}</UButton>
-    </div>
+    </PageHeader>
 
     <p v-if="klass.pupils.length === 0" class="text-stone">{{ t('classes.noPupils') }}</p>
     <ol v-else class="flex flex-col gap-2">

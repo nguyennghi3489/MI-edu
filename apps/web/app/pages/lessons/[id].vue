@@ -218,27 +218,23 @@ async function saveQuestion() {
 </script>
 
 <template>
-  <main class="max-w-2xl mx-auto p-6">
-    <NuxtLink to="/lessons" class="text-moss text-sm">{{ t('lessons.back') }}</NuxtLink>
-    <div class="flex items-center justify-between mt-2 mb-2">
-      <div>
-        <h1 class="text-3xl flex items-center gap-2">
-          {{ lesson.title }}
-          <UBadge v-if="lesson.isLocked" color="warning" variant="subtle">{{ t('lessons.locked') }}</UBadge>
-        </h1>
-        <p class="text-stone text-sm">{{ lesson.subject }} · {{ t('lessons.grade') }} {{ lesson.grade }}</p>
-      </div>
-      <div class="flex gap-2">
-        <UButton variant="outline" @click="duplicateLesson">{{ t('lessons.duplicate') }}</UButton>
-        <UButton
-          color="error"
-          variant="ghost"
-          @click="askConfirm(t('lessons.confirmDeleteLesson'), removeLesson)"
-        >
-          {{ t('lessons.delete') }}
-        </UButton>
-      </div>
-    </div>
+  <main class="max-w-6xl mx-auto p-8">
+    <NuxtLink to="/lessons" class="text-moss text-sm mb-2 inline-block">{{ t('lessons.back') }}</NuxtLink>
+    <PageHeader>
+      <template #title>
+        {{ lesson.title }}
+        <UBadge v-if="lesson.isLocked" color="warning" variant="subtle">{{ t('lessons.locked') }}</UBadge>
+      </template>
+      <template #subtitle>{{ lesson.subject }} · {{ t('lessons.grade') }} {{ lesson.grade }}</template>
+      <UButton variant="outline" @click="duplicateLesson">{{ t('lessons.duplicate') }}</UButton>
+      <UButton
+        color="error"
+        variant="ghost"
+        @click="askConfirm(t('lessons.confirmDeleteLesson'), removeLesson)"
+      >
+        {{ t('lessons.delete') }}
+      </UButton>
+    </PageHeader>
     <p v-if="duplicateError" class="text-red-600 text-sm mb-2">{{ duplicateError }}</p>
 
     <div class="flex items-center gap-2 mb-6">

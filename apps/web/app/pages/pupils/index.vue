@@ -48,7 +48,6 @@ async function addPupil() {
 
 <template>
   <main class="max-w-6xl mx-auto p-8">
-    <NuxtLink to="/classes" class="text-moss text-sm mb-2 inline-block">{{ t('pupils.back') }}</NuxtLink>
     <PageHeader :title="t('pupils.title')">
       <UButton @click="openAdd">{{ t('pupils.add') }}</UButton>
     </PageHeader>
