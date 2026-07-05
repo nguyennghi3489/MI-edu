@@ -1,5 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { PlanLimitsService } from '../plan-limits/plan-limits.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { PupilsService } from '../pupils/pupils.service';
 import { BulkAddPupilsDto, CreateClassDto, CreatePupilDto } from './dto';
@@ -9,6 +10,7 @@ export class ClassesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly pupils: PupilsService,
+    private readonly planLimits: PlanLimitsService,
   ) {}
 
   // ponytail: every teacher has exactly one org today (default-org-per-teacher, #2) —
@@ -37,7 +39,9 @@ export class ClassesService {
     }));
   }
 
-  create(teacherId: string, dto: CreateClassDto) {
+  async create(teacherId: string, dto: CreateClassDto) {
+    const count = await this.prisma.class.count({ where: { teacherId, isDefault: false } });
+    await this.planLimits.assert(teacherId, 'classes', count);
     return this.prisma.class.create({ data: { ...dto, teacherId } });
   }
 
@@ -84,6 +88,10 @@ export class ClassesService {
   async bulkAddPupils(teacherId: string, classId: string, dto: BulkAddPupilsDto) {
     await this.assertOwnClass(teacherId, classId);
     const orgId = await this.orgId(teacherId);
+    // ponytail: checked once up front, not per-row — a CSV that starts under the cap can still push
+    // the org over it; tighten to per-row accounting if free teachers start gaming this.
+    const count = await this.prisma.pupil.count({ where: { orgId } });
+    await this.planLimits.assert(teacherId, 'pupils', count);
     let enrolled = 0;
     let skipped = 0;
     for (const p of dto.pupils) {

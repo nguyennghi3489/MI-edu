@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { PlanLimitsService } from '../plan-limits/plan-limits.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLessonDto, CreateQuestionDto, UpdateLessonDto } from './dto';
 
@@ -26,7 +27,10 @@ function validateQuestionConfig(type: string, config: Record<string, unknown>) {
 
 @Injectable()
 export class LessonsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly planLimits: PlanLimitsService,
+  ) {}
 
   list(teacherId: string) {
     return this.prisma.lesson.findMany({
@@ -52,6 +56,8 @@ export class LessonsService {
 
   async duplicate(teacherId: string, id: string) {
     const lesson = await this.assertOwnLesson(teacherId, id);
+    const count = await this.prisma.lesson.count({ where: { teacherId } });
+    await this.planLimits.assert(teacherId, 'lessons', count);
     const questions = await this.prisma.question.findMany({ where: { lessonId: id }, orderBy: { order: 'asc' } });
     return this.prisma.lesson.create({
       data: {
@@ -75,7 +81,9 @@ export class LessonsService {
     });
   }
 
-  create(teacherId: string, dto: CreateLessonDto) {
+  async create(teacherId: string, dto: CreateLessonDto) {
+    const count = await this.prisma.lesson.count({ where: { teacherId } });
+    await this.planLimits.assert(teacherId, 'lessons', count);
     return this.prisma.lesson.create({ data: { ...dto, teacherId } });
   }
 
@@ -95,6 +103,8 @@ export class LessonsService {
       throw new ForbiddenException('Bài học đã được giao, không thể chỉnh sửa câu hỏi');
     }
     validateQuestionConfig(dto.type, dto.config);
+    const questionCount = await this.prisma.question.count({ where: { lessonId } });
+    await this.planLimits.assert(teacherId, 'questionsPerLesson', questionCount);
     const last = await this.prisma.question.findFirst({
       where: { lessonId },
       orderBy: { order: 'desc' },

@@ -6,6 +6,7 @@ import { ClassesModule } from './classes/classes.module';
 import { LessonsModule } from './lessons/lessons.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PupilsModule } from './pupils/pupils.module';
+import { ResultsModule } from './results/results.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { PupilsModule } from './pupils/pupils.module';
     ClassesModule,
     AssignmentsModule,
     PupilsModule,
+    ResultsModule,
   ],
   controllers: [AppController],
 })

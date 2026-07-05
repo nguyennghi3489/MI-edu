@@ -47,8 +47,11 @@ let timerHandle: ReturnType<typeof setInterval> | undefined
 const score = ref(0)
 const correctCount = ref(0)
 const review = ref<{ question: PlayQuestion; correct: boolean }[]>([])
+const answerLog = ref<{ questionId: string; answer: number | boolean; correct: boolean; timeMs: number }[]>([])
 let startedAt = 0
+let questionStartedAt = 0
 const elapsedSec = ref(0)
+const submitState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
 const options = computed<{ label: string; value: number | boolean }[]>(() => {
   const q = current.value
@@ -104,6 +107,7 @@ function startTimer() {
   answered.value = false
   chosen.value = undefined
   timeLeft.value = current.value!.timeLimitSec
+  questionStartedAt = Date.now()
   timerHandle = setInterval(() => {
     timeLeft.value--
     if (timeLeft.value <= 0) submitAnswer(undefined)
@@ -122,6 +126,14 @@ function submitAnswer(value: number | boolean | undefined) {
     score.value += POINTS_PER_CORRECT
   }
   review.value.push({ question: current.value!, correct })
+  if (!isPreview) {
+    answerLog.value.push({
+      questionId: current.value!.id,
+      answer: value ?? false,
+      correct,
+      timeMs: Date.now() - questionStartedAt,
+    })
+  }
 
   setTimeout(next, 900)
 }
@@ -133,6 +145,30 @@ function next() {
   } else {
     elapsedSec.value = Math.round((Date.now() - startedAt) / 1000)
     phase.value = 'result'
+    if (!isPreview) submitResult()
+  }
+}
+
+async function submitResult() {
+  submitState.value = 'saving'
+  try {
+    const gameToken = sessionStorage.getItem('gameToken')
+    await $fetch(`/api/results`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${gameToken}` },
+      body: {
+        assignmentId,
+        studentName: name.value,
+        studentNumber: studentNumber.value,
+        totalScore: score.value,
+        totalCorrect: correctCount.value,
+        totalQuestions: questions.value.length,
+        answers: answerLog.value,
+      },
+    })
+    submitState.value = 'saved'
+  } catch {
+    submitState.value = 'error'
   }
 }
 
@@ -142,6 +178,8 @@ function playAgain() {
   score.value = 0
   correctCount.value = 0
   review.value = []
+  answerLog.value = []
+  submitState.value = 'idle'
   startedAt = Date.now()
   startTimer()
 }
@@ -238,6 +276,8 @@ onUnmounted(() => clearInterval(timerHandle))
             <span>{{ r.correct ? '✅' : '❌' }}</span>
           </li>
         </ul>
+        <p v-if="submitState === 'saved'" class="text-emerald-600 text-sm">{{ t('play.submitted') }}</p>
+        <p v-else-if="submitState === 'error'" class="text-red-600 text-sm">{{ t('play.submitFailed') }}</p>
         <UButton block @click="playAgain">{{ t('play.playAgain') }}</UButton>
       </div>
     </UCard>

@@ -29,6 +29,9 @@ describe('Classes + Pupils (e2e)', () => {
       .post('/api/auth/signup')
       .send({ email, password, name: 'Cô Lan' });
     token = signup.body.accessToken;
+    // this suite exercises multiple classes/pupils beyond the free-plan caps (#8) —
+    // those caps get their own coverage in plan-limits.e2e-spec.ts
+    await prisma.teacher.update({ where: { email }, data: { plan: 'pro' } });
 
     const otherSignup = await request(app.getHttpServer())
       .post('/api/auth/signup')

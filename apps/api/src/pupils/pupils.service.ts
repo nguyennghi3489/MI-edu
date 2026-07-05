@@ -1,11 +1,15 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { PlanLimitsService } from '../plan-limits/plan-limits.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePupilDto } from './dto';
 
 @Injectable()
 export class PupilsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly planLimits: PlanLimitsService,
+  ) {}
 
   // ponytail: every teacher has exactly one org today (default-org-per-teacher, #2) —
   // findFirst is safe until #20 lands multi-org membership, which needs an org switcher instead.
@@ -29,6 +33,8 @@ export class PupilsService {
 
   async create(teacherId: string, dto: CreatePupilDto) {
     const orgId = await this.orgId(teacherId);
+    const count = await this.prisma.pupil.count({ where: { orgId } });
+    await this.planLimits.assert(teacherId, 'pupils', count);
     try {
       return await this.prisma.pupil.create({ data: { ...dto, orgId } });
     } catch (e) {
