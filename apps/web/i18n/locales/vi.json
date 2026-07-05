@@ -3,6 +3,7 @@
     "name": "Lớp Vui"
   },
   "nav": {
+    "section": "Giảng dạy",
     "lessons": "Bài học",
     "classes": "Lớp học",
     "pupils": "Học sinh"
@@ -28,7 +29,10 @@
     "emptyHint": "Tạo bài học đầu tiên của bạn!",
     "createFirst": "Tạo bài học đầu tiên!",
     "create": "Tạo bài học",
+    "createNew": "Tạo bài học mới",
     "cancel": "Huỷ",
+    "share": "Chia sẻ",
+    "editLesson": "Chỉnh sửa",
     "all": "Tất cả",
     "searchPlaceholder": "Tìm bài học...",
     "lessonTitle": "Tiêu đề",

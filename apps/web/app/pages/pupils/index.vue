@@ -47,12 +47,11 @@ async function addPupil() {
 </script>
 
 <template>
-  <main class="max-w-2xl mx-auto p-6">
-    <NuxtLink to="/classes" class="text-moss text-sm">{{ t('pupils.back') }}</NuxtLink>
-    <div class="flex items-center justify-between mt-2 mb-6">
-      <h1 class="text-3xl">{{ t('pupils.title') }}</h1>
+  <main class="max-w-6xl mx-auto p-8">
+    <NuxtLink to="/classes" class="text-moss text-sm mb-2 inline-block">{{ t('pupils.back') }}</NuxtLink>
+    <PageHeader :title="t('pupils.title')">
       <UButton @click="openAdd">{{ t('pupils.add') }}</UButton>
-    </div>
+    </PageHeader>
 
     <p v-if="pupils.length === 0" class="text-stone">{{ t('pupils.empty') }}</p>
     <ol v-else class="flex flex-col gap-2">

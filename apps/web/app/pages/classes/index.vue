@@ -21,14 +21,11 @@ const { data: classes } = await useAsyncData(
 </script>
 
 <template>
-  <main class="max-w-3xl mx-auto p-6">
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-3xl">{{ t('classes.title') }}</h1>
-      <div class="flex gap-2">
-        <UButton to="/pupils" variant="ghost">{{ t('classes.goToPupils') }}</UButton>
-        <UButton to="/classes/new">{{ t('classes.create') }}</UButton>
-      </div>
-    </div>
+  <main class="max-w-6xl mx-auto p-8">
+    <PageHeader :title="t('classes.title')">
+      <UButton to="/pupils" variant="ghost">{{ t('classes.goToPupils') }}</UButton>
+      <UButton to="/classes/new">{{ t('classes.create') }}</UButton>
+    </PageHeader>
 
     <div v-if="classes.length === 0" class="card text-center py-12">
       <p class="text-lg mb-2">{{ t('classes.empty') }}</p>

@@ -7,6 +7,7 @@ interface Lesson {
   subject: string
   grade: string
   gameFormat: string
+  createdAt: string
   _count: { questions: number }
 }
 
@@ -30,58 +31,102 @@ const filtered = computed(() =>
 </script>
 
 <template>
-  <main class="max-w-3xl mx-auto p-6">
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-3xl">{{ t('lessons.title') }}</h1>
-      <UButton to="/lessons/new">{{ t('lessons.create') }}</UButton>
+  <main class="max-w-6xl mx-auto p-8">
+    <PageHeader :title="t('lessons.title')">
+      <UButton to="/lessons/new" class="rounded-xl px-5 py-3 font-semibold shadow-[0_6px_16px_rgba(47,74,58,0.28)]">
+        + {{ t('lessons.createNew') }}
+      </UButton>
+    </PageHeader>
+
+    <div class="flex flex-wrap items-center gap-3.5 mb-6">
+      <UInput
+        v-model="search"
+        class="w-full sm:w-80"
+        :ui="{ base: 'rounded-xl' }"
+        :placeholder="t('lessons.searchPlaceholder')"
+      />
+
+      <div class="flex gap-2 overflow-x-auto pb-1">
+        <UButton
+          class="rounded-full font-semibold"
+          :variant="subjectFilter === '' ? 'solid' : 'outline'"
+          size="sm"
+          @click="subjectFilter = ''"
+        >
+          {{ t('lessons.all') }}
+        </UButton>
+        <UButton
+          v-for="s in SUBJECTS"
+          :key="s.name"
+          class="rounded-full font-semibold"
+          :variant="subjectFilter === s.name ? 'solid' : 'outline'"
+          size="sm"
+          :style="subjectFilter !== s.name ? { color: s.color, borderColor: s.color } : {}"
+          @click="subjectFilter = s.name"
+        >
+          {{ s.name }}
+        </UButton>
+      </div>
     </div>
 
-    <UInput
-      v-model="search"
-      class="w-full mb-3"
-      :placeholder="t('lessons.searchPlaceholder')"
-    />
-
-    <div class="flex gap-2 overflow-x-auto pb-1 mb-4">
-      <UButton
-        :variant="subjectFilter === '' ? 'solid' : 'outline'"
-        size="sm"
-        @click="subjectFilter = ''"
-      >
-        {{ t('lessons.all') }}
-      </UButton>
-      <UButton
-        v-for="s in SUBJECTS"
-        :key="s.name"
-        :variant="subjectFilter === s.name ? 'solid' : 'outline'"
-        size="sm"
-        :style="subjectFilter !== s.name ? { color: s.color, borderColor: s.color } : {}"
-        @click="subjectFilter = s.name"
-      >
-        {{ s.name }}
-      </UButton>
-    </div>
-
-    <div v-if="filtered.length === 0" class="card text-center py-12">
+    <div v-if="filtered.length === 0" class="card text-center py-12 px-6">
       <p class="text-lg mb-2">{{ t('lessons.empty') }}</p>
       <p class="text-stone mb-4">{{ t('lessons.emptyHint') }}</p>
       <UButton to="/lessons/new">{{ t('lessons.createFirst') }}</UButton>
     </div>
 
-    <div v-else class="flex flex-col gap-3">
-      <NuxtLink
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-[18px]">
+      <div
         v-for="l in filtered"
         :key="l.id"
-        :to="`/lessons/${l.id}`"
-        class="card block"
+        class="card relative group shadow-[0_4px_12px_rgba(58,46,38,0.07)] transition-shadow hover:shadow-[0_4px_12px_rgba(58,46,38,0.12)]"
         :style="{ borderLeft: `5px solid ${subjectColor(l.subject)}` }"
       >
-        <p class="font-bold">{{ l.title }}</p>
-        <p class="text-stone text-sm">
-          {{ l.subject }} · {{ t('lessons.grade') }} {{ l.grade }} ·
-          {{ l._count.questions }} {{ t('lessons.questions') }}
-        </p>
-      </NuxtLink>
+        <NuxtLink :to="`/lessons/${l.id}`" class="absolute inset-0 z-0" :aria-label="l.title" />
+
+        <div class="relative z-[1] p-5 pb-4 pointer-events-none">
+          <div class="flex items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-2">
+              <span
+                class="size-9 rounded-xl grid place-items-center text-base shrink-0"
+                :style="{ background: subjectSoft(l.subject) }"
+              >
+                {{ subjectIcon(l.subject) }}
+              </span>
+              <span
+                class="text-sm font-semibold px-2.5 py-0.5 rounded-full border"
+                :style="{ color: subjectColor(l.subject), borderColor: subjectColor(l.subject) }"
+              >
+                {{ l.subject }}
+              </span>
+            </div>
+            <span
+              class="text-xs font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap"
+              :style="{ color: gameFormatMeta(l.gameFormat).color, background: gameFormatMeta(l.gameFormat).soft }"
+            >
+              {{ gameFormatMeta(l.gameFormat).icon }} {{ gameFormatMeta(l.gameFormat).label }}
+            </span>
+          </div>
+
+          <p class="font-bold mb-2">{{ l.title }}</p>
+          <p class="text-stone text-sm">
+            {{ t('lessons.grade') }} {{ l.grade }} ·
+            {{ l._count.questions }} {{ t('lessons.questions') }}
+          </p>
+        </div>
+
+        <div class="relative z-[1] border-t border-black/10 px-5 py-3 flex items-center justify-between gap-2">
+          <span class="text-stone text-sm pointer-events-none">🕐 {{ timeAgo(l.createdAt) }}</span>
+          <div class="flex gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+            <UButton :to="`/lessons/${l.id}`" variant="outline" color="neutral" size="xs" class="rounded-lg text-moss">
+              🔗 {{ t('lessons.share') }}
+            </UButton>
+            <UButton :to="`/lessons/${l.id}`" variant="outline" color="neutral" size="xs" class="rounded-lg text-bark">
+              ✏️ {{ t('lessons.editLesson') }}
+            </UButton>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 </template>
@@ -90,7 +135,6 @@ const filtered = computed(() =>
 .card {
   background: var(--color-linen);
   border: 1px solid rgba(58, 46, 38, 0.1);
-  border-radius: 14px;
-  padding: 1rem 1.25rem;
+  border-radius: 16px;
 }
 </style>
