@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/errorMessage'
+
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
 interface ClassSummary {
@@ -13,23 +15,55 @@ interface ClassSummary {
 
 const { t } = useI18n()
 
-const { data: classes } = await useAsyncData(
+const { data: classes, refresh } = await useAsyncData(
   'classes',
   () => useApi<ClassSummary[]>('/api/classes'),
   { default: () => [] },
 )
+
+const open = ref(false)
+const busy = ref(false)
+const error = ref('')
+const name = ref('')
+const grade = ref('')
+const schoolYear = ref('')
+
+function openAdd() {
+  name.value = ''
+  grade.value = ''
+  schoolYear.value = ''
+  error.value = ''
+  open.value = true
+}
+
+async function submit() {
+  error.value = ''
+  busy.value = true
+  try {
+    await useApi('/api/classes', {
+      method: 'POST',
+      body: { name: name.value, grade: grade.value || undefined, schoolYear: schoolYear.value || undefined },
+    })
+    await refresh()
+    open.value = false
+  } catch (e: any) {
+    error.value = errorMessage(e, t)
+  } finally {
+    busy.value = false
+  }
+}
 </script>
 
 <template>
   <main class="max-w-6xl mx-auto p-8">
     <PageHeader :title="t('classes.title')">
       <UButton to="/pupils" variant="ghost">{{ t('classes.goToPupils') }}</UButton>
-      <UButton to="/classes/new">{{ t('classes.create') }}</UButton>
+      <UButton @click="openAdd">{{ t('classes.create') }}</UButton>
     </PageHeader>
 
     <div v-if="classes.length === 0" class="card text-center py-12">
       <p class="text-lg mb-2">{{ t('classes.empty') }}</p>
-      <UButton to="/classes/new">{{ t('classes.createFirst') }}</UButton>
+      <UButton @click="openAdd">{{ t('classes.createFirst') }}</UButton>
     </div>
 
     <div v-else class="flex flex-col gap-3">
@@ -41,6 +75,26 @@ const { data: classes } = await useAsyncData(
         </p>
       </NuxtLink>
     </div>
+
+    <UModal v-model:open="open" :title="t('classes.create')">
+      <template #body>
+        <div class="flex flex-col gap-4">
+          <UFormField :label="t('classes.name')">
+            <UInput v-model="name" class="w-full" required />
+          </UFormField>
+          <UFormField :label="t('classes.grade')">
+            <UInput v-model="grade" class="w-full" placeholder="VD: 3" />
+          </UFormField>
+          <UFormField :label="t('classes.schoolYear')">
+            <UInput v-model="schoolYear" class="w-full" placeholder="VD: 2025-2026" />
+          </UFormField>
+          <p v-if="error" class="text-red-600 text-sm">{{ error }}</p>
+        </div>
+      </template>
+      <template #footer>
+        <UButton block size="lg" :loading="busy" @click="submit">{{ t('classes.create') }}</UButton>
+      </template>
+    </UModal>
   </main>
 </template>
 

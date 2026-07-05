@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/errorMessage'
+
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
 interface Lesson {
@@ -21,6 +23,38 @@ const { data: lessons } = await useAsyncData(
 const search = ref('')
 const subjectFilter = ref('')
 
+const open = ref(false)
+const busy = ref(false)
+const error = ref('')
+const title = ref('')
+const subject = ref(SUBJECTS[0].name)
+const grade = ref('')
+
+function openAdd() {
+  title.value = ''
+  subject.value = SUBJECTS[0].name
+  grade.value = ''
+  error.value = ''
+  open.value = true
+}
+
+async function submit() {
+  error.value = ''
+  busy.value = true
+  try {
+    const lesson = await useApi<{ id: string }>('/api/lessons', {
+      method: 'POST',
+      body: { title: title.value, subject: subject.value, grade: grade.value, gameFormat: 'quiz' },
+    })
+    open.value = false
+    await navigateTo(`/lessons/${lesson.id}`)
+  } catch (e: any) {
+    error.value = errorMessage(e, t)
+  } finally {
+    busy.value = false
+  }
+}
+
 const filtered = computed(() =>
   lessons.value.filter((l) => {
     const matchesSearch = l.title.toLowerCase().includes(search.value.toLowerCase())
@@ -33,7 +67,7 @@ const filtered = computed(() =>
 <template>
   <main class="max-w-6xl mx-auto p-8">
     <PageHeader :title="t('lessons.title')">
-      <UButton to="/lessons/new" class="rounded-xl px-5 py-3 font-semibold shadow-[0_6px_16px_rgba(47,74,58,0.28)]">
+      <UButton class="rounded-xl px-5 py-3 font-semibold shadow-[0_6px_16px_rgba(47,74,58,0.28)]" @click="openAdd">
         + {{ t('lessons.createNew') }}
       </UButton>
     </PageHeader>
@@ -72,7 +106,7 @@ const filtered = computed(() =>
     <div v-if="filtered.length === 0" class="card text-center py-12 px-6">
       <p class="text-lg mb-2">{{ t('lessons.empty') }}</p>
       <p class="text-stone mb-4">{{ t('lessons.emptyHint') }}</p>
-      <UButton to="/lessons/new">{{ t('lessons.createFirst') }}</UButton>
+      <UButton @click="openAdd">{{ t('lessons.createFirst') }}</UButton>
     </div>
 
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-[18px]">
@@ -128,6 +162,26 @@ const filtered = computed(() =>
         </div>
       </div>
     </div>
+
+    <UModal v-model:open="open" :title="t('lessons.create')">
+      <template #body>
+        <div class="flex flex-col gap-4">
+          <UFormField :label="t('lessons.lessonTitle')">
+            <UInput v-model="title" class="w-full" required />
+          </UFormField>
+          <UFormField :label="t('lessons.subject')">
+            <USelect v-model="subject" class="w-full" :items="SUBJECTS.map((s) => s.name)" />
+          </UFormField>
+          <UFormField :label="t('lessons.grade')">
+            <UInput v-model="grade" class="w-full" placeholder="VD: 3" required />
+          </UFormField>
+          <p v-if="error" class="text-red-600 text-sm">{{ error }}</p>
+        </div>
+      </template>
+      <template #footer>
+        <UButton block size="lg" :loading="busy" @click="submit">{{ t('lessons.create') }}</UButton>
+      </template>
+    </UModal>
   </main>
 </template>
 
