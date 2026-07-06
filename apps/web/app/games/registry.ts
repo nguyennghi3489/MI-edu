@@ -94,7 +94,8 @@ export const GAMES: GameDef[] = [
     description: 'Trả lời đúng để nhận vàng, xây tháp chặn từng đợt quái vật.',
     icon: '🏰',
     tier: 'pro',
-    status: 'coming-soon',
+    status: 'live',
+    component: defineAsyncComponent(() => import('./TowerDefenseGame.vue')),
   },
 ]
 

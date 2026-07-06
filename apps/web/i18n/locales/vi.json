@@ -18,7 +18,8 @@
     "you": "Bạn",
     "ghost": "Bóng ma",
     "target": "Mục tiêu",
-    "tapToCast": "Chạm để quăng cần!"
+    "tapToCast": "Chạm để quăng cần!",
+    "buildHint": "Chạm ô trống để xây tháp ({build} 🪙) — chạm tháp để nâng cấp ({upgrade} 🪙)"
   },
   "auth": {
     "loginTitle": "Đăng nhập",
