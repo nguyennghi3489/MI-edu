@@ -86,7 +86,7 @@ async function logout() {
             </p>
           </div>
         </div>
-        <UButton variant="ghost" block @click="logout">{{
+        <UButton variant="ghost" block icon="i-lucide-log-out" @click="logout">{{
           t("auth.logout")
         }}</UButton>
       </div>
