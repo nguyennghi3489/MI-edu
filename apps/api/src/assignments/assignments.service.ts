@@ -56,6 +56,7 @@ export class AssignmentsService {
       title: assignment.lesson.title,
       subject: assignment.lesson.subject,
       questionCount: assignment.lesson._count.questions,
+      gameFormat: assignment.lesson.gameFormat,
     };
   }
 

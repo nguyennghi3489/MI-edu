@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import { gradeAnswer, type PlayQuestion } from '~/utils/gradeAnswer'
+import type { PlayQuestion } from '~/utils/gradeAnswer'
+import { resolveGame, type GameComplete } from '~/games/registry'
 
 interface PublicAssignment {
   title: string
   subject: string
   questionCount: number
+  gameFormat: string
 }
-
-// quiz.com-style pill colors, up to 4 options
-const PILL_COLORS = ['bg-emerald-200 text-emerald-950', 'bg-lime-200 text-lime-950', 'bg-amber-200 text-amber-950', 'bg-rose-200 text-rose-950']
-const POINTS_PER_CORRECT = 100
 
 const route = useRoute()
 const { t } = useI18n()
@@ -19,51 +17,34 @@ const isPreview = !!previewLessonId
 
 const { data: assignment, error } = await useAsyncData(`play-${assignmentId ?? previewLessonId}`, () => {
   if (isPreview) {
-    return useApi<{ title: string; subject: string; questions: unknown[] }>(`/api/lessons/${previewLessonId}`).then(
-      (l) => ({ title: l.title, subject: l.subject, questionCount: l.questions.length }),
+    return useApi<{ title: string; subject: string; gameFormat: string; questions: unknown[] }>(`/api/lessons/${previewLessonId}`).then(
+      (l) => ({ title: l.title, subject: l.subject, questionCount: l.questions.length, gameFormat: l.gameFormat }),
     )
   }
   return useApi<PublicAssignment>(`/api/assignments/${assignmentId}/public`)
 })
+
+const game = computed(() => resolveGame(assignment.value?.gameFormat))
 
 const name = ref('')
 const studentNumber = ref('')
 const busy = ref(false)
 const enterError = ref('')
 
-type Phase = 'entry' | 'quiz' | 'result'
+type Phase = 'entry' | 'playing' | 'result'
 const phase = ref<Phase>('entry')
+const attempt = ref(0) // bumped on replay to remount the game component
 
 const canStart = computed(() => name.value.trim() !== '' && studentNumber.value.trim() !== '')
 
 const questions = ref<PlayQuestion[]>([])
-const currentIndex = ref(0)
-const current = computed(() => questions.value[currentIndex.value])
-const answered = ref(false)
-const chosen = ref<number | boolean | undefined>(undefined)
-const timeLeft = ref(0)
-let timerHandle: ReturnType<typeof setInterval> | undefined
-
 const score = ref(0)
 const correctCount = ref(0)
 const review = ref<{ question: PlayQuestion; correct: boolean }[]>([])
-const answerLog = ref<{ questionId: string; answer: number | boolean; correct: boolean; timeMs: number }[]>([])
+const answerLog = ref<GameComplete['answers']>([])
 let startedAt = 0
-let questionStartedAt = 0
 const elapsedSec = ref(0)
 const submitState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
-
-const options = computed<{ label: string; value: number | boolean }[]>(() => {
-  const q = current.value
-  if (!q) return []
-  if (q.type === 'true-false') {
-    return [
-      { label: t('lessons.true'), value: true },
-      { label: t('lessons.false'), value: false },
-    ]
-  }
-  return (q.config.options ?? []).map((label, i) => ({ label, value: i }))
-})
 
 async function fetchQuestions() {
   if (isPreview) {
@@ -88,13 +69,8 @@ async function start() {
       sessionStorage.setItem('gameToken', accessToken)
     }
     questions.value = await fetchQuestions()
-    currentIndex.value = 0
-    score.value = 0
-    correctCount.value = 0
-    review.value = []
     startedAt = Date.now()
-    phase.value = 'quiz'
-    startTimer()
+    phase.value = 'playing'
   } catch (e: any) {
     enterError.value = e.data?.message ?? t('auth.failed')
   } finally {
@@ -102,51 +78,17 @@ async function start() {
   }
 }
 
-function startTimer() {
-  clearInterval(timerHandle)
-  answered.value = false
-  chosen.value = undefined
-  timeLeft.value = current.value!.timeLimitSec
-  questionStartedAt = Date.now()
-  timerHandle = setInterval(() => {
-    timeLeft.value--
-    if (timeLeft.value <= 0) submitAnswer(undefined)
-  }, 1000)
-}
-
-function submitAnswer(value: number | boolean | undefined) {
-  if (answered.value) return
-  answered.value = true
-  chosen.value = value
-  clearInterval(timerHandle)
-
-  const correct = value !== undefined && gradeAnswer(current.value!, value)
-  if (correct) {
-    correctCount.value++
-    score.value += POINTS_PER_CORRECT
-  }
-  review.value.push({ question: current.value!, correct })
-  if (!isPreview) {
-    answerLog.value.push({
-      questionId: current.value!.id,
-      answer: value ?? false,
-      correct,
-      timeMs: Date.now() - questionStartedAt,
-    })
-  }
-
-  setTimeout(next, 900)
-}
-
-function next() {
-  if (currentIndex.value + 1 < questions.value.length) {
-    currentIndex.value++
-    startTimer()
-  } else {
-    elapsedSec.value = Math.round((Date.now() - startedAt) / 1000)
-    phase.value = 'result'
-    if (!isPreview) submitResult()
-  }
+function onComplete({ answers, score: gameScore }: GameComplete) {
+  answerLog.value = answers
+  score.value = gameScore
+  correctCount.value = answers.filter((a) => a.correct).length
+  review.value = answers.map((a) => ({
+    question: questions.value.find((q) => q.id === a.questionId)!,
+    correct: a.correct,
+  }))
+  elapsedSec.value = Math.round((Date.now() - startedAt) / 1000)
+  phase.value = 'result'
+  if (!isPreview) submitResult()
 }
 
 async function submitResult() {
@@ -173,25 +115,12 @@ async function submitResult() {
 }
 
 function playAgain() {
-  phase.value = 'quiz'
-  currentIndex.value = 0
-  score.value = 0
-  correctCount.value = 0
-  review.value = []
   answerLog.value = []
   submitState.value = 'idle'
+  attempt.value++
   startedAt = Date.now()
-  startTimer()
+  phase.value = 'playing'
 }
-
-function pillClass(value: number | boolean, i: number) {
-  if (!answered.value) return PILL_COLORS[i]
-  if (value === current.value!.config.correct) return 'bg-emerald-500 text-white'
-  if (value === chosen.value) return 'bg-rose-500 text-white'
-  return `${PILL_COLORS[i]} opacity-50`
-}
-
-onUnmounted(() => clearInterval(timerHandle))
 </script>
 
 <template>
@@ -220,38 +149,13 @@ onUnmounted(() => clearInterval(timerHandle))
       </form>
     </UCard>
 
-    <div v-else-if="phase === 'quiz' && current" class="w-full max-w-4xl">
-      <div class="h-2 rounded-full bg-slate-800 mb-6 overflow-hidden">
-        <div
-          class="h-full bg-emerald-400 transition-all duration-1000 ease-linear"
-          :style="{ width: `${(timeLeft / current.timeLimitSec) * 100}%` }"
-        />
-      </div>
-      <p class="text-slate-400 text-sm mb-2">
-        {{ t('play.question') }} {{ currentIndex + 1 }} {{ t('play.of') }} {{ questions.length }}
-      </p>
-      <div class="grid gap-6" :class="current.imageUrl ? 'md:grid-cols-2' : ''">
-        <div>
-          <h2 class="text-2xl text-white mb-6">{{ current.text }}</h2>
-          <div class="flex flex-col gap-3">
-            <button
-              v-for="(opt, i) in options"
-              :key="i"
-              type="button"
-              class="rounded-2xl px-6 py-4 text-lg font-semibold text-left transition-colors"
-              :class="pillClass(opt.value, i)"
-              :disabled="answered"
-              @click="submitAnswer(opt.value)"
-            >
-              {{ opt.label }}
-            </button>
-          </div>
-        </div>
-        <div v-if="current.imageUrl" class="rounded-2xl overflow-hidden bg-slate-900 min-h-[240px]">
-          <img :src="current.imageUrl" class="w-full h-full object-contain" />
-        </div>
-      </div>
-    </div>
+    <component
+      :is="game.component"
+      v-else-if="phase === 'playing'"
+      :key="attempt"
+      :questions="questions"
+      @complete="onComplete"
+    />
 
     <UCard v-else-if="phase === 'result'" class="w-full max-w-sm">
       <div class="flex flex-col gap-4 text-center">

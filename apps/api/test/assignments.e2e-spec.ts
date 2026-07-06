@@ -98,7 +98,7 @@ describe('Assignments (e2e)', () => {
     const res = await request(app.getHttpServer())
       .get(`/api/assignments/${assignmentId}/public`)
       .expect(200);
-    expect(res.body).toEqual({ title: 'Phép trừ', subject: 'Toán', questionCount: 1 });
+    expect(res.body).toEqual({ title: 'Phép trừ', subject: 'Toán', questionCount: 1, gameFormat: 'quiz' });
   });
 
   it('GET /assignments/:id/questions returns the lesson questions for a valid game token', async () => {
