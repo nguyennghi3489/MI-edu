@@ -60,26 +60,21 @@ const sortedStudents = computed(() => {
 </script>
 
 <template>
-  <main class="max-w-3xl mx-auto p-6">
-    <NuxtLink to="/lessons" class="text-moss text-sm">{{ t('results.back') }}</NuxtLink>
-    <h1 class="text-3xl mt-2 mb-6">{{ t('results.title') }}</h1>
+  <main class="max-w-6xl mx-auto p-8">
+    <NuxtLink to="/lessons" class="text-moss text-sm mb-2 inline-block">{{ t('results.back') }}</NuxtLink>
+    <PageHeader :title="t('results.title')" />
 
     <div class="grid grid-cols-3 gap-3 mb-6">
-      <div class="card text-center">
-        <p class="text-stone text-sm">{{ t('results.submissions') }}</p>
-        <p class="text-2xl">{{ summary?.submissions ?? 0 }}</p>
-      </div>
-      <div class="card text-center">
-        <p class="text-stone text-sm">{{ t('results.avgScore') }}</p>
-        <p class="text-2xl">{{ Math.round(summary?.avgScore ?? 0) }}</p>
-      </div>
-      <div class="card text-center">
-        <p class="text-stone text-sm">{{ t('results.avgAccuracy') }}</p>
-        <p class="text-2xl">{{ Math.round((summary?.avgAccuracy ?? 0) * 100) }}%</p>
-      </div>
+      <StatTile class="card text-center" :label="t('results.submissions')" :value="summary?.submissions ?? 0" />
+      <StatTile class="card text-center" :label="t('results.avgScore')" :value="Math.round(summary?.avgScore ?? 0)" />
+      <StatTile
+        class="card text-center"
+        :label="t('results.avgAccuracy')"
+        :value="`${Math.round((summary?.avgAccuracy ?? 0) * 100)}%`"
+      />
     </div>
 
-    <p v-if="!summary?.students.length" class="text-stone mb-6">{{ t('results.empty') }}</p>
+    <EmptyState v-if="!summary?.students.length" class="mb-6" :message="t('results.empty')" />
     <table v-else class="w-full mb-6 text-sm">
       <thead>
         <tr class="text-left text-stone">
@@ -117,12 +112,3 @@ const sortedStudents = computed(() => {
     </ol>
   </main>
 </template>
-
-<style scoped>
-.card {
-  background: var(--color-linen);
-  border: 1px solid rgba(58, 46, 38, 0.1);
-  border-radius: 14px;
-  padding: 1rem 1.25rem;
-}
-</style>

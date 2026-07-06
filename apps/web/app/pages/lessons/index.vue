@@ -103,47 +103,43 @@ const filtered = computed(() =>
       </div>
     </div>
 
-    <div v-if="filtered.length === 0" class="card text-center py-12 px-6">
-      <p class="text-lg mb-2">{{ t('lessons.empty') }}</p>
-      <p class="text-stone mb-4">{{ t('lessons.emptyHint') }}</p>
+    <EmptyState v-if="filtered.length === 0" :message="t('lessons.empty')" :hint="t('lessons.emptyHint')">
       <UButton @click="openAdd">{{ t('lessons.createFirst') }}</UButton>
-    </div>
+    </EmptyState>
 
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-[18px]">
       <div
         v-for="l in filtered"
         :key="l.id"
-        class="card relative group shadow-[0_4px_12px_rgba(58,46,38,0.07)] transition-shadow hover:shadow-[0_4px_12px_rgba(58,46,38,0.12)]"
+        class="card p-0 rounded-2xl relative group shadow-[0_4px_12px_rgba(58,46,38,0.07)] transition-shadow hover:shadow-[0_4px_12px_rgba(58,46,38,0.12)]"
         :style="{ borderLeft: `5px solid ${subjectColor(l.subject)}` }"
       >
         <NuxtLink :to="`/lessons/${l.id}`" class="absolute inset-0 z-0" :aria-label="l.title" />
 
         <div class="relative z-[1] p-5 pb-4 pointer-events-none">
           <div class="flex items-center justify-between gap-2 mb-4">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2.5">
               <span
-                class="size-9 rounded-xl grid place-items-center text-base shrink-0"
+                class="size-12 rounded-2xl grid place-items-center text-xl shrink-0"
                 :style="{ background: subjectSoft(l.subject) }"
               >
                 {{ subjectIcon(l.subject) }}
               </span>
-              <span
-                class="text-sm font-semibold px-2.5 py-0.5 rounded-full border"
-                :style="{ color: subjectColor(l.subject), borderColor: subjectColor(l.subject) }"
-              >
+              <Pill class="font-bold" :color="subjectColor(l.subject)" :soft="subjectSoft(l.subject)">
                 {{ l.subject }}
-              </span>
+              </Pill>
             </div>
-            <span
-              class="text-xs font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap"
-              :style="{ color: gameFormatMeta(l.gameFormat).color, background: gameFormatMeta(l.gameFormat).soft }"
+            <Pill
+              class="font-semibold whitespace-nowrap"
+              :color="gameFormatMeta(l.gameFormat).color"
+              :soft="gameFormatMeta(l.gameFormat).soft"
             >
               {{ gameFormatMeta(l.gameFormat).icon }} {{ gameFormatMeta(l.gameFormat).label }}
-            </span>
+            </Pill>
           </div>
 
-          <p class="font-bold mb-2">{{ l.title }}</p>
-          <p class="text-stone text-sm">
+          <p class="text-lg font-bold mb-3 line-clamp-2">{{ l.title }}</p>
+          <p class="text-stone">
             {{ t('lessons.grade') }} {{ l.grade }} ·
             {{ l._count.questions }} {{ t('lessons.questions') }}
           </p>
@@ -151,11 +147,11 @@ const filtered = computed(() =>
 
         <div class="relative z-[1] border-t border-black/10 px-5 py-3 flex items-center justify-between gap-2">
           <span class="text-stone text-sm pointer-events-none">🕐 {{ timeAgo(l.createdAt) }}</span>
-          <div class="flex gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-            <UButton :to="`/lessons/${l.id}`" variant="outline" color="neutral" size="xs" class="rounded-lg text-moss">
+          <div class="flex gap-2">
+            <UButton :to="`/lessons/${l.id}`" variant="outline" color="neutral" size="sm" class="rounded-xl font-semibold text-moss">
               🔗 {{ t('lessons.share') }}
             </UButton>
-            <UButton :to="`/lessons/${l.id}`" variant="outline" color="neutral" size="xs" class="rounded-lg text-bark">
+            <UButton :to="`/lessons/${l.id}`" variant="outline" color="neutral" size="sm" class="rounded-xl font-semibold text-bark">
               ✏️ {{ t('lessons.editLesson') }}
             </UButton>
           </div>
@@ -163,32 +159,23 @@ const filtered = computed(() =>
       </div>
     </div>
 
-    <UModal v-model:open="open" :title="t('lessons.create')">
-      <template #body>
-        <div class="flex flex-col gap-4">
-          <UFormField :label="t('lessons.lessonTitle')">
-            <UInput v-model="title" class="w-full" required />
-          </UFormField>
-          <UFormField :label="t('lessons.subject')">
-            <USelect v-model="subject" class="w-full" :items="SUBJECTS.map((s) => s.name)" />
-          </UFormField>
-          <UFormField :label="t('lessons.grade')">
-            <UInput v-model="grade" class="w-full" placeholder="VD: 3" required />
-          </UFormField>
-          <p v-if="error" class="text-red-600 text-sm">{{ error }}</p>
-        </div>
-      </template>
-      <template #footer>
-        <UButton block size="lg" :loading="busy" @click="submit">{{ t('lessons.create') }}</UButton>
-      </template>
-    </UModal>
+    <FormModal
+      v-model:open="open"
+      :title="t('lessons.create')"
+      :submit-label="t('lessons.create')"
+      :busy="busy"
+      :error="error"
+      @submit="submit"
+    >
+      <UFormField :label="t('lessons.lessonTitle')">
+        <UInput v-model="title" class="w-full" required />
+      </UFormField>
+      <UFormField :label="t('lessons.subject')">
+        <USelect v-model="subject" class="w-full" :items="SUBJECTS.map((s) => s.name)" />
+      </UFormField>
+      <UFormField :label="t('lessons.grade')">
+        <UInput v-model="grade" class="w-full" placeholder="VD: 3" required />
+      </UFormField>
+    </FormModal>
   </main>
 </template>
-
-<style scoped>
-.card {
-  background: var(--color-linen);
-  border: 1px solid rgba(58, 46, 38, 0.1);
-  border-radius: 16px;
-}
-</style>

@@ -45,3 +45,14 @@ h1 {
   font-weight: 700;
   color: var(--color-forest);
 }
+
+/* Hearth card surface — was copy-pasted as scoped styles in 5 pages.
+   In the components layer so Tailwind utilities (p-0, rounded-2xl) can override per-use. */
+@layer components {
+  .card {
+    background: var(--color-linen);
+    border: 1px solid rgba(58, 46, 38, 0.1);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+  }
+}

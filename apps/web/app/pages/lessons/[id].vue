@@ -259,7 +259,7 @@ async function saveQuestion() {
       {{ t('lessons.addQuestion') }}
     </UButton>
 
-    <p v-if="lesson.questions.length === 0" class="text-stone">{{ t('lessons.noQuestions') }}</p>
+    <EmptyState v-if="lesson.questions.length === 0" :message="t('lessons.noQuestions')" />
     <ol v-else class="flex flex-col gap-2">
       <li
         v-for="(q, i) in lesson.questions"
@@ -320,114 +320,90 @@ async function saveQuestion() {
       </li>
     </ol>
 
-    <UModal
+    <FormModal
       v-model:open="open"
       :title="editingId ? t('lessons.editQuestion') : t('lessons.addQuestion')"
+      :submit-label="t('lessons.save')"
+      :busy="saving"
+      :error="formError"
+      body-class="flex flex-col gap-6"
       :ui="{ content: 'max-w-4xl', body: 'p-6 sm:p-8', footer: 'p-6 sm:p-8' }"
+      @submit="saveQuestion"
     >
-      <template #body>
-        <div class="flex flex-col gap-6">
-          <div class="flex gap-3">
-            <UButton
-              v-for="qt in QUESTION_TYPES"
-              :key="qt.value"
-              :variant="newType === qt.value ? 'solid' : 'outline'"
-              size="lg"
-              @click="newType = qt.value"
-            >
-              {{ t(qt.label) }}
-            </UButton>
+      <div class="flex gap-3">
+        <UButton
+          v-for="qt in QUESTION_TYPES"
+          :key="qt.value"
+          :variant="newType === qt.value ? 'solid' : 'outline'"
+          size="lg"
+          @click="newType = qt.value"
+        >
+          {{ t(qt.label) }}
+        </UButton>
+      </div>
+
+      <UFormField :label="t('lessons.questionText')" size="lg">
+        <UTextarea v-model="newText" class="w-full" size="lg" autoresize :rows="2" :maxrows="6" required />
+      </UFormField>
+
+      <div v-if="newType === 'mcq'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <UFormField
+          v-for="(_, i) in newOptions"
+          :key="i"
+          :label="`${t('lessons.option')} ${String.fromCharCode(65 + i)}`"
+          size="lg"
+        >
+          <div class="flex items-start gap-3">
+            <input v-model="newCorrectOption" type="radio" :value="i" name="correct-option" class="size-5 mt-3" />
+            <UTextarea v-model="newOptions[i]" class="w-full" size="lg" autoresize :rows="1" :maxrows="4" required />
           </div>
+        </UFormField>
+      </div>
 
-          <UFormField :label="t('lessons.questionText')" size="lg">
-            <UTextarea v-model="newText" class="w-full" size="lg" autoresize :rows="2" :maxrows="6" required />
-          </UFormField>
+      <div v-else class="flex gap-3">
+        <UButton :variant="newCorrectBool ? 'solid' : 'outline'" size="lg" @click="newCorrectBool = true">
+          {{ t('lessons.true') }}
+        </UButton>
+        <UButton :variant="!newCorrectBool ? 'solid' : 'outline'" size="lg" @click="newCorrectBool = false">
+          {{ t('lessons.false') }}
+        </UButton>
+      </div>
 
-          <div v-if="newType === 'mcq'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <UFormField
-              v-for="(_, i) in newOptions"
-              :key="i"
-              :label="`${t('lessons.option')} ${String.fromCharCode(65 + i)}`"
-              size="lg"
-            >
-              <div class="flex items-start gap-3">
-                <input v-model="newCorrectOption" type="radio" :value="i" name="correct-option" class="size-5 mt-3" />
-                <UTextarea v-model="newOptions[i]" class="w-full" size="lg" autoresize :rows="1" :maxrows="4" required />
-              </div>
-            </UFormField>
-          </div>
-
-          <div v-else class="flex gap-3">
-            <UButton :variant="newCorrectBool ? 'solid' : 'outline'" size="lg" @click="newCorrectBool = true">
-              {{ t('lessons.true') }}
-            </UButton>
-            <UButton :variant="!newCorrectBool ? 'solid' : 'outline'" size="lg" @click="newCorrectBool = false">
-              {{ t('lessons.false') }}
-            </UButton>
-          </div>
-
-          <UFormField :label="t('lessons.timeLimit')" size="lg">
-            <div class="flex gap-3">
-              <UButton
-                v-for="opt in TIME_OPTIONS"
-                :key="opt"
-                :variant="newTimeLimit === opt ? 'solid' : 'outline'"
-                size="lg"
-                @click="newTimeLimit = opt"
-              >
-                {{ opt }}s
-              </UButton>
-            </div>
-          </UFormField>
-
-          <p v-if="formError" class="text-red-600 text-sm">{{ formError }}</p>
+      <UFormField :label="t('lessons.timeLimit')" size="lg">
+        <div class="flex gap-3">
+          <UButton
+            v-for="opt in TIME_OPTIONS"
+            :key="opt"
+            :variant="newTimeLimit === opt ? 'solid' : 'outline'"
+            size="lg"
+            @click="newTimeLimit = opt"
+          >
+            {{ opt }}s
+          </UButton>
         </div>
-      </template>
-      <template #footer>
-        <UButton block size="lg" :loading="saving" @click="saveQuestion">{{ t('lessons.save') }}</UButton>
-      </template>
-    </UModal>
+      </UFormField>
+    </FormModal>
 
-    <UModal v-model:open="assignOpen" :title="t('lessons.assign')">
-      <template #body>
-        <div class="flex flex-col gap-4">
-          <UFormField :label="t('lessons.class')">
-            <USelect
-              v-model="assignClassId"
-              class="w-full"
-              :items="classes.map((c) => ({ label: c.name, value: c.id }))"
-            />
-          </UFormField>
-          <UFormField :label="t('lessons.dueDate')">
-            <UInput v-model="assignDueDate" type="date" class="w-full" />
-          </UFormField>
-          <p v-if="assignError" class="text-red-600 text-sm">{{ assignError }}</p>
-        </div>
-      </template>
-      <template #footer>
-        <UButton block size="lg" :loading="assignBusy" @click="submitAssign">{{ t('lessons.assign') }}</UButton>
-      </template>
-    </UModal>
+    <FormModal
+      v-model:open="assignOpen"
+      :title="t('lessons.assign')"
+      :submit-label="t('lessons.assign')"
+      :busy="assignBusy"
+      :error="assignError"
+      @submit="submitAssign"
+    >
+      <UFormField :label="t('lessons.class')">
+        <USelect
+          v-model="assignClassId"
+          class="w-full"
+          :items="classes.map((c) => ({ label: c.name, value: c.id }))"
+        />
+      </UFormField>
+      <UFormField :label="t('lessons.dueDate')">
+        <UInput v-model="assignDueDate" type="date" class="w-full" />
+      </UFormField>
+    </FormModal>
 
-    <UModal v-model:open="confirmOpen" :title="t('lessons.confirmTitle')">
-      <template #body>
-        <p>{{ confirmMessage }}</p>
-      </template>
-      <template #footer>
-        <div class="flex justify-end gap-2 w-full">
-          <UButton variant="outline" @click="confirmOpen = false">{{ t('lessons.cancel') }}</UButton>
-          <UButton color="error" @click="confirmYes">{{ t('lessons.confirmYes') }}</UButton>
-        </div>
-      </template>
-    </UModal>
+    <ConfirmDialog v-model:open="confirmOpen" :message="confirmMessage" @confirm="confirmYes" />
   </main>
 </template>
-
-<style scoped>
-.card {
-  background: var(--color-linen);
-  border: 1px solid rgba(58, 46, 38, 0.1);
-  border-radius: 14px;
-  padding: 1rem 1.25rem;
-}
-</style>

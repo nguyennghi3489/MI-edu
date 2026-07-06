@@ -24,6 +24,10 @@ const error = ref('')
 const name = ref('')
 const studentNumber = ref('')
 
+function initialsOf(name: string) {
+  return name.split(' ').filter(Boolean).slice(-2).map((w) => w[0]).join('').toUpperCase()
+}
+
 function openAdd() {
   name.value = ''
   studentNumber.value = ''
@@ -52,37 +56,45 @@ async function addPupil() {
       <UButton @click="openAdd">{{ t('pupils.add') }}</UButton>
     </PageHeader>
 
-    <p v-if="pupils.length === 0" class="text-stone">{{ t('pupils.empty') }}</p>
-    <ol v-else class="flex flex-col gap-2">
-      <li
+    <EmptyState v-if="pupils.length === 0" :message="t('pupils.empty')" />
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div
         v-for="p in pupils"
         :key="p.id"
-        class="flex items-center gap-3 p-3 rounded-xl bg-linen border border-black/10"
+        class="card p-4 rounded-2xl shadow-[0_4px_12px_rgba(58,46,38,0.07)]"
       >
-        <span class="font-mono text-sm text-stone w-12">{{ p.studentNumber }}</span>
-        <span class="flex-1">{{ p.name }}</span>
-        <div class="flex gap-1 flex-wrap justify-end">
-          <UBadge v-for="c in p.classes" :key="c.id" variant="subtle">{{ c.name }}</UBadge>
+        <div class="flex items-center gap-3 mb-3">
+          <span
+            class="size-11 rounded-full bg-forest-100 text-forest font-bold grid place-items-center shrink-0"
+          >
+            {{ initialsOf(p.name) }}
+          </span>
+          <div class="min-w-0">
+            <p class="font-bold truncate">{{ p.name }}</p>
+            <p class="text-stone text-sm font-mono">#{{ p.studentNumber }}</p>
+          </div>
+        </div>
+        <div class="flex gap-1.5 flex-wrap">
+          <UBadge v-for="c in p.classes" :key="c.id" variant="subtle" class="rounded-full">{{ c.name }}</UBadge>
           <span v-if="p.classes.length === 0" class="text-stone text-xs">{{ t('pupils.noClasses') }}</span>
         </div>
-      </li>
-    </ol>
+      </div>
+    </div>
 
-    <UModal v-model:open="open" :title="t('pupils.add')">
-      <template #body>
-        <div class="flex flex-col gap-4">
-          <UFormField :label="t('pupils.name')">
-            <UInput v-model="name" class="w-full" required />
-          </UFormField>
-          <UFormField :label="t('pupils.studentNumber')">
-            <UInput v-model="studentNumber" class="w-full" required />
-          </UFormField>
-          <p v-if="error" class="text-red-600 text-sm">{{ error }}</p>
-        </div>
-      </template>
-      <template #footer>
-        <UButton block size="lg" :loading="busy" @click="addPupil">{{ t('pupils.add') }}</UButton>
-      </template>
-    </UModal>
+    <FormModal
+      v-model:open="open"
+      :title="t('pupils.add')"
+      :submit-label="t('pupils.add')"
+      :busy="busy"
+      :error="error"
+      @submit="addPupil"
+    >
+      <UFormField :label="t('pupils.name')">
+        <UInput v-model="name" class="w-full" required />
+      </UFormField>
+      <UFormField :label="t('pupils.studentNumber')">
+        <UInput v-model="studentNumber" class="w-full" required />
+      </UFormField>
+    </FormModal>
   </main>
 </template>

@@ -257,18 +257,9 @@ onUnmounted(() => clearInterval(timerHandle))
       <div class="flex flex-col gap-4 text-center">
         <h1 class="text-2xl">🎉</h1>
         <div class="flex justify-around">
-          <div>
-            <p class="text-stone text-sm">{{ t('play.score') }}</p>
-            <p class="text-2xl">{{ score }}</p>
-          </div>
-          <div>
-            <p class="text-stone text-sm">{{ t('play.correct') }}</p>
-            <p class="text-2xl">{{ correctCount }}/{{ questions.length }}</p>
-          </div>
-          <div>
-            <p class="text-stone text-sm">{{ t('play.time') }}</p>
-            <p class="text-2xl">{{ elapsedSec }}s</p>
-          </div>
+          <StatTile :label="t('play.score')" :value="score" />
+          <StatTile :label="t('play.correct')" :value="`${correctCount}/${questions.length}`" />
+          <StatTile :label="t('play.time')" :value="`${elapsedSec}s`" />
         </div>
         <ul class="text-left flex flex-col gap-1">
           <li v-for="(r, i) in review" :key="i" class="flex justify-between text-sm">

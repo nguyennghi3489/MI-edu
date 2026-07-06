@@ -6,9 +6,11 @@ export default defineNuxtConfig({
   // including Nuxt Icon's own "/api/_nuxt_icon" route — move Icon off /api so it isn't swallowed
   icon: { localApiEndpoint: "/_icon" },
   // ponytail: one config bumps every Nuxt UI component (buttons, inputs, badges) off the tiny 'md' default
-  ui: { theme: { defaultVariants: { size: "lg" } } },
   // ponytail: Hearth is light-only for teacher screens; dark theme is bespoke to the student game, not a color-mode toggle
-  colorMode: { preference: "light", fallback: "light" },
+  ui: {
+    theme: { defaultVariants: { size: "lg" } },
+    colorMode: false,
+  },
   app: {
     head: {
       title: "Lớp Vui",

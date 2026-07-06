@@ -20,6 +20,10 @@ interface ClassDetail {
 const { t } = useI18n()
 const route = useRoute()
 
+function initialsOf(name: string) {
+  return name.split(' ').filter(Boolean).slice(-2).map((w) => w[0]).join('').toUpperCase()
+}
+
 const { data: klass, error, refresh } = await useAsyncData(`class-${route.params.id}`, () =>
   useApi<ClassDetail>(`/api/classes/${route.params.id}`),
 )
@@ -132,84 +136,80 @@ async function confirmImport() {
       <UButton size="sm" variant="outline" @click="openImport">{{ t('classes.importCsv') }}</UButton>
     </PageHeader>
 
-    <p v-if="klass.pupils.length === 0" class="text-stone">{{ t('classes.noPupils') }}</p>
-    <ol v-else class="flex flex-col gap-2">
-      <li
+    <EmptyState v-if="klass.pupils.length === 0" :message="t('classes.noPupils')" />
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div
         v-for="p in klass.pupils"
         :key="p.id"
-        class="flex items-center gap-3 p-3 rounded-xl bg-linen border border-black/10"
+        class="card p-4 rounded-2xl shadow-[0_4px_12px_rgba(58,46,38,0.07)] flex items-center gap-3"
       >
-        <span class="font-mono text-sm text-stone w-12">{{ p.studentNumber }}</span>
-        <span class="flex-1">{{ p.name }}</span>
-      </li>
-    </ol>
-
-    <UModal v-model:open="addOpen" :title="t('classes.addPupil')">
-      <template #body>
-        <div class="flex flex-col gap-4">
-          <div class="flex gap-3">
-            <UButton :variant="addMode === 'new' ? 'solid' : 'outline'" @click="addMode = 'new'">
-              {{ t('classes.createNewPupil') }}
-            </UButton>
-            <UButton :variant="addMode === 'existing' ? 'solid' : 'outline'" @click="addMode = 'existing'">
-              {{ t('classes.pickExistingPupil') }}
-            </UButton>
-          </div>
-
-          <template v-if="addMode === 'new'">
-            <UFormField :label="t('classes.pupilName')">
-              <UInput v-model="newName" class="w-full" required />
-            </UFormField>
-            <UFormField :label="t('classes.studentNumber')">
-              <UInput v-model="newStudentNumber" class="w-full" required />
-            </UFormField>
-          </template>
-          <template v-else>
-            <p v-if="pickablePupils.length === 0" class="text-stone text-sm">{{ t('classes.noPickablePupils') }}</p>
-            <UFormField v-else :label="t('classes.pickExistingPupil')">
-              <USelect
-                v-model="pickedPupilId"
-                class="w-full"
-                :items="pickablePupils.map((p) => ({ label: `${p.name} (${p.studentNumber})`, value: p.id }))"
-              />
-            </UFormField>
-          </template>
-
-          <p v-if="addError" class="text-red-600 text-sm">{{ addError }}</p>
-        </div>
-      </template>
-      <template #footer>
-        <UButton
-          block
-          size="lg"
-          :disabled="addMode === 'existing' && pickablePupils.length === 0"
-          :loading="addBusy"
-          @click="addPupil"
+        <span
+          class="size-11 rounded-full bg-forest-100 text-forest font-bold grid place-items-center shrink-0"
         >
-          {{ t('classes.addPupil') }}
-        </UButton>
-      </template>
-    </UModal>
-
-    <UModal v-model:open="importOpen" :title="t('classes.importCsv')">
-      <template #body>
-        <div class="flex flex-col gap-4">
-          <p class="text-stone text-sm">{{ t('classes.importHint') }}</p>
-          <input type="file" accept=".csv,text/csv" @change="onFileChange" />
-          <ul v-if="importRows.length" class="flex flex-col gap-1 max-h-64 overflow-y-auto">
-            <li v-for="(r, i) in importRows" :key="i" class="text-sm flex gap-2">
-              <span class="font-mono text-stone w-12">{{ r.studentNumber }}</span>
-              <span>{{ r.name }}</span>
-            </li>
-          </ul>
-          <p v-if="importError" class="text-red-600 text-sm">{{ importError }}</p>
+          {{ initialsOf(p.name) }}
+        </span>
+        <div class="min-w-0">
+          <p class="font-bold truncate">{{ p.name }}</p>
+          <p class="text-stone text-sm font-mono">#{{ p.studentNumber }}</p>
         </div>
-      </template>
-      <template #footer>
-        <UButton block size="lg" :disabled="!importRows.length" :loading="importBusy" @click="confirmImport">
-          {{ t('classes.confirmImport') }} ({{ importRows.length }})
+      </div>
+    </div>
+
+    <FormModal
+      v-model:open="addOpen"
+      :title="t('classes.addPupil')"
+      :submit-label="t('classes.addPupil')"
+      :busy="addBusy"
+      :error="addError"
+      :disabled="addMode === 'existing' && pickablePupils.length === 0"
+      @submit="addPupil"
+    >
+      <div class="flex gap-3">
+        <UButton :variant="addMode === 'new' ? 'solid' : 'outline'" @click="addMode = 'new'">
+          {{ t('classes.createNewPupil') }}
         </UButton>
+        <UButton :variant="addMode === 'existing' ? 'solid' : 'outline'" @click="addMode = 'existing'">
+          {{ t('classes.pickExistingPupil') }}
+        </UButton>
+      </div>
+
+      <template v-if="addMode === 'new'">
+        <UFormField :label="t('classes.pupilName')">
+          <UInput v-model="newName" class="w-full" required />
+        </UFormField>
+        <UFormField :label="t('classes.studentNumber')">
+          <UInput v-model="newStudentNumber" class="w-full" required />
+        </UFormField>
       </template>
-    </UModal>
+      <template v-else>
+        <p v-if="pickablePupils.length === 0" class="text-stone text-sm">{{ t('classes.noPickablePupils') }}</p>
+        <UFormField v-else :label="t('classes.pickExistingPupil')">
+          <USelect
+            v-model="pickedPupilId"
+            class="w-full"
+            :items="pickablePupils.map((p) => ({ label: `${p.name} (${p.studentNumber})`, value: p.id }))"
+          />
+        </UFormField>
+      </template>
+    </FormModal>
+
+    <FormModal
+      v-model:open="importOpen"
+      :title="t('classes.importCsv')"
+      :submit-label="`${t('classes.confirmImport')} (${importRows.length})`"
+      :busy="importBusy"
+      :error="importError"
+      :disabled="!importRows.length"
+      @submit="confirmImport"
+    >
+      <p class="text-stone text-sm">{{ t('classes.importHint') }}</p>
+      <input type="file" accept=".csv,text/csv" @change="onFileChange" />
+      <ul v-if="importRows.length" class="flex flex-col gap-1 max-h-64 overflow-y-auto">
+        <li v-for="(r, i) in importRows" :key="i" class="text-sm flex gap-2">
+          <span class="font-mono text-stone w-12">{{ r.studentNumber }}</span>
+          <span>{{ r.name }}</span>
+        </li>
+      </ul>
+    </FormModal>
   </main>
 </template>

@@ -61,10 +61,9 @@ async function submit() {
       <UButton @click="openAdd">{{ t('classes.create') }}</UButton>
     </PageHeader>
 
-    <div v-if="classes.length === 0" class="card text-center py-12">
-      <p class="text-lg mb-2">{{ t('classes.empty') }}</p>
+    <EmptyState v-if="classes.length === 0" :message="t('classes.empty')">
       <UButton @click="openAdd">{{ t('classes.createFirst') }}</UButton>
-    </div>
+    </EmptyState>
 
     <div v-else class="flex flex-col gap-3">
       <NuxtLink v-for="c in classes" :key="c.id" :to="`/classes/${c.id}`" class="card block">
@@ -76,33 +75,23 @@ async function submit() {
       </NuxtLink>
     </div>
 
-    <UModal v-model:open="open" :title="t('classes.create')">
-      <template #body>
-        <div class="flex flex-col gap-4">
-          <UFormField :label="t('classes.name')">
-            <UInput v-model="name" class="w-full" required />
-          </UFormField>
-          <UFormField :label="t('classes.grade')">
-            <UInput v-model="grade" class="w-full" placeholder="VD: 3" />
-          </UFormField>
-          <UFormField :label="t('classes.schoolYear')">
-            <UInput v-model="schoolYear" class="w-full" placeholder="VD: 2025-2026" />
-          </UFormField>
-          <p v-if="error" class="text-red-600 text-sm">{{ error }}</p>
-        </div>
-      </template>
-      <template #footer>
-        <UButton block size="lg" :loading="busy" @click="submit">{{ t('classes.create') }}</UButton>
-      </template>
-    </UModal>
+    <FormModal
+      v-model:open="open"
+      :title="t('classes.create')"
+      :submit-label="t('classes.create')"
+      :busy="busy"
+      :error="error"
+      @submit="submit"
+    >
+      <UFormField :label="t('classes.name')">
+        <UInput v-model="name" class="w-full" required />
+      </UFormField>
+      <UFormField :label="t('classes.grade')">
+        <UInput v-model="grade" class="w-full" placeholder="VD: 3" />
+      </UFormField>
+      <UFormField :label="t('classes.schoolYear')">
+        <UInput v-model="schoolYear" class="w-full" placeholder="VD: 2025-2026" />
+      </UFormField>
+    </FormModal>
   </main>
 </template>
-
-<style scoped>
-.card {
-  background: var(--color-linen);
-  border: 1px solid rgba(58, 46, 38, 0.1);
-  border-radius: 14px;
-  padding: 1rem 1.25rem;
-}
-</style>
