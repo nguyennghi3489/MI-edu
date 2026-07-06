@@ -17,7 +17,8 @@
     "close": "Đóng",
     "you": "Bạn",
     "ghost": "Bóng ma",
-    "target": "Mục tiêu"
+    "target": "Mục tiêu",
+    "tapToCast": "Chạm để quăng cần!"
   },
   "auth": {
     "loginTitle": "Đăng nhập",
