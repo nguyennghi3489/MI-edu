@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -76,10 +75,6 @@ export class AssignmentsService {
     if (roster.length > 0) {
       const pupil = roster.find((p) => p.studentNumber === dto.studentNumber);
       if (!pupil) throw new BadRequestException('Không tìm thấy số thứ tự trong lớp');
-      const existing = await this.prisma.gameResult.findUnique({
-        where: { assignmentId_pupilId: { assignmentId: id, pupilId: pupil.id } },
-      });
-      if (existing) throw new ConflictException('Bạn đã hoàn thành bài tập này');
       pupilId = pupil.id;
     }
 

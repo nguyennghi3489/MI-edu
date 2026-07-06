@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -28,32 +28,41 @@ export class ResultsService {
     }
     if (payload.assignmentId !== dto.assignmentId) throw new UnauthorizedException();
 
-    try {
-      return await this.prisma.gameResult.create({
-        data: {
-          assignmentId: dto.assignmentId,
-          pupilId: payload.pupilId,
-          studentName: dto.studentName,
-          studentNumber: dto.studentNumber,
-          totalScore: dto.totalScore,
-          totalCorrect: dto.totalCorrect,
-          totalQuestions: dto.totalQuestions,
-          answers: {
-            create: dto.answers.map((a) => ({
-              questionId: a.questionId,
-              answer: a.answer as Prisma.InputJsonValue,
-              correct: a.correct,
-              timeMs: a.timeMs,
-            })),
-          },
-        },
+    const data = {
+      assignmentId: dto.assignmentId,
+      pupilId: payload.pupilId,
+      studentName: dto.studentName,
+      studentNumber: dto.studentNumber,
+      totalScore: dto.totalScore,
+      totalCorrect: dto.totalCorrect,
+      totalQuestions: dto.totalQuestions,
+      answers: {
+        create: dto.answers.map((a) => ({
+          questionId: a.questionId,
+          answer: a.answer as Prisma.InputJsonValue,
+          correct: a.correct,
+          timeMs: a.timeMs,
+        })),
+      },
+    };
+
+    // personal best: a rostered pupil keeps only their highest-scoring run;
+    // free-text (no pupilId) submissions are never deduped
+    if (payload.pupilId) {
+      const existing = await this.prisma.gameResult.findUnique({
+        where: { assignmentId_pupilId: { assignmentId: dto.assignmentId, pupilId: payload.pupilId } },
       });
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-        throw new ConflictException('Kết quả đã được nộp trước đó');
+      if (existing) {
+        if (dto.totalScore <= existing.totalScore) return existing;
+        // ponytail: delete+create replaces the run atomically; ResultAnswer cascade wipes old answers
+        const [, created] = await this.prisma.$transaction([
+          this.prisma.gameResult.delete({ where: { id: existing.id } }),
+          this.prisma.gameResult.create({ data }),
+        ]);
+        return created;
       }
-      throw e;
     }
+    return this.prisma.gameResult.create({ data });
   }
 
   async findByAssignment(teacherId: string, assignmentId: string) {

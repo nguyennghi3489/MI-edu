@@ -73,7 +73,7 @@ describe('Results (e2e)', () => {
     await app.close();
   });
 
-  const submitBody = () => ({
+  const submitBody = (over: Record<string, unknown> = {}) => ({
     assignmentId,
     studentName: 'Bé An',
     studentNumber: '1',
@@ -81,6 +81,7 @@ describe('Results (e2e)', () => {
     totalCorrect: 1,
     totalQuestions: 1,
     answers: [{ questionId, answer: true, correct: true, timeMs: 3200 }],
+    ...over,
   });
 
   it('POST /results without a valid token returns 401', () =>
@@ -98,12 +99,33 @@ describe('Results (e2e)', () => {
     expect(answers).toHaveLength(1);
   });
 
-  it('a second POST /results with the same pupil + assignment returns 409', () =>
-    request(app.getHttpServer())
+  it('a lower-score resubmit keeps the existing best, no error', async () => {
+    const res = await request(app.getHttpServer())
       .post('/api/results')
       .set('Authorization', `Bearer ${gameToken}`)
-      .send(submitBody())
-      .expect(409));
+      .send(submitBody({ totalScore: 50, totalCorrect: 0, answers: [{ questionId, answer: false, correct: false, timeMs: 900 }] }))
+      .expect(201);
+    expect(res.body.totalScore).toBe(100);
+
+    const results = await prisma.gameResult.findMany({ where: { assignmentId } });
+    expect(results).toHaveLength(1);
+    expect(results[0].totalScore).toBe(100);
+  });
+
+  it('a higher-score resubmit replaces the result and its answers', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/results')
+      .set('Authorization', `Bearer ${gameToken}`)
+      .send(submitBody({ totalScore: 200, answers: [{ questionId, answer: true, correct: true, timeMs: 1100 }] }))
+      .expect(201);
+    expect(res.body.totalScore).toBe(200);
+
+    const results = await prisma.gameResult.findMany({ where: { assignmentId } });
+    expect(results).toHaveLength(1);
+    const answers = await prisma.resultAnswer.findMany({ where: { gameResultId: results[0].id } });
+    expect(answers).toHaveLength(1);
+    expect(answers[0].timeMs).toBe(1100);
+  });
 
   it('GET /results?assignmentId= returns per-student scores (teacher auth required)', async () => {
     await request(app.getHttpServer()).get(`/api/results?assignmentId=${assignmentId}`).expect(401);
@@ -113,7 +135,7 @@ describe('Results (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
     expect(res.body.submissions).toBe(1);
-    expect(res.body.avgScore).toBe(100);
+    expect(res.body.avgScore).toBe(200); // best run only
     expect(res.body.students).toHaveLength(1);
   });
 

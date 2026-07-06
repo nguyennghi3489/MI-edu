@@ -180,7 +180,7 @@ describe('Assignments (e2e)', () => {
         .expect(201)
         .expect((res) => expect(res.body.accessToken).toBeTruthy()));
 
-    it('returns 409 on a second submission attempt after the game is complete', async () => {
+    it('lets a pupil who already played re-enter to retry (personal best)', async () => {
       const pupil = await prisma.pupil.findFirstOrThrow({ where: { studentNumber: pupilStudentNumber } });
       await prisma.gameResult.create({
         data: {
@@ -196,7 +196,8 @@ describe('Assignments (e2e)', () => {
       await request(app.getHttpServer())
         .post(`/api/assignments/${rosterAssignmentId}/enter`)
         .send({ name: 'Bé Minh', studentNumber: pupilStudentNumber })
-        .expect(409);
+        .expect(201)
+        .expect((res) => expect(res.body.accessToken).toBeTruthy());
     });
   });
 });
