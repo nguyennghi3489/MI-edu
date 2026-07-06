@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PlayQuestion } from '~/utils/gradeAnswer'
 import { resolveGame, type GameComplete } from '~/games/registry'
+import GameSession from '~/games/GameSession.vue'
 
 interface PublicAssignment {
   title: string
@@ -151,15 +152,16 @@ function playAgain() {
       </form>
     </UCard>
 
-    <component
-      :is="game.component"
-      v-else-if="phase === 'playing'"
-      :key="attempt"
-      :questions="questions"
-      :game-time-sec="assignment!.gameTimeSec"
-      :ghost-score="assignment!.avgScore"
-      @complete="onComplete"
-    />
+    <div v-else-if="phase === 'playing'" class="fixed inset-0 z-50 bg-slate-950">
+      <GameSession
+        :key="attempt"
+        :questions="questions"
+        :game="game.component!"
+        :game-time-sec="assignment!.gameTimeSec"
+        :ghost-score="assignment!.avgScore"
+        @complete="onComplete"
+      />
+    </div>
 
     <UCard v-else-if="phase === 'result'" class="w-full max-w-sm">
       <div class="flex flex-col gap-4 text-center">

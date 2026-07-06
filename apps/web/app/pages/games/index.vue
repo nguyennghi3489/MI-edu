@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { GAMES, type GameDef, type GameComplete } from '~/games/registry'
+import GameSession from '~/games/GameSession.vue'
 import type { PlayQuestion } from '~/utils/gradeAnswer'
 
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
@@ -59,24 +60,24 @@ function closeDemo() {
       </div>
     </div>
 
-    <div v-if="demoGame" class="fixed inset-0 z-50 bg-cream flex items-center justify-center p-4">
+    <div v-if="demoGame" class="fixed inset-0 z-50 bg-slate-950">
       <UButton
-        class="absolute top-4 right-4"
+        class="absolute top-4 right-4 z-20"
         variant="ghost"
         icon="i-lucide-x"
         :aria-label="t('games.close')"
         @click="closeDemo"
       />
 
-      <component
-        :is="demoGame.component"
+      <GameSession
         v-if="!demoResult"
         :key="demoAttempt"
         :questions="SAMPLE_QUESTIONS"
+        :game="demoGame.component!"
         @complete="demoResult = $event"
       />
 
-      <UCard v-else class="w-full max-w-sm">
+      <UCard v-else class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm">
         <div class="flex flex-col gap-4 text-center">
           <h1 class="text-2xl">🎉</h1>
           <div class="flex justify-around">

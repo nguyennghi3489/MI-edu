@@ -16,9 +16,7 @@
     "demoNote": "Chế độ chơi thử — kết quả không được lưu",
     "close": "Đóng",
     "you": "Bạn",
-    "ghost": "Bóng ma",
-    "steerLeft": "Sang trái",
-    "steerRight": "Sang phải"
+    "ghost": "Bóng ma"
   },
   "auth": {
     "loginTitle": "Đăng nhập",

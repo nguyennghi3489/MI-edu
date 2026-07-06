@@ -7,11 +7,24 @@ export interface AnswerRecord {
   timeMs: number
 }
 
-// Every game emits complete({ answers, score }) — answers feed the learning
-// analytics identically across games; score is the game's own currency.
+// Every game session emits complete({ answers, score }) — answers feed the
+// learning analytics identically across games; score is the game's own currency.
 export interface GameComplete {
   answers: AnswerRecord[]
   score: number
+}
+
+// The game↔session contract (GameSession.vue). The game runs full-screen and
+// calls askQuestion() whenever one of ITS OWN triggers fires (burst ended,
+// round passed, fish hooked, chest touched…) — the session overlays the
+// question and resolves with the outcome; null = question pool exhausted, the
+// game should wrap up and emit complete({ score }).
+export type AskQuestion = () => Promise<{ correct: boolean } | null>
+
+export interface GameConfig {
+  gameTimeSec: number
+  ghostScore: number | null // class-average past score, null when unknown (demo/preview/first run)
+  questionCount: number
 }
 
 export interface GameDef {
