@@ -6,7 +6,15 @@
     "section": "Giảng dạy",
     "lessons": "Bài học",
     "classes": "Lớp học",
-    "pupils": "Học sinh"
+    "pupils": "Học sinh",
+    "games": "Trò chơi"
+  },
+  "games": {
+    "title": "Trò chơi",
+    "demo": "Chơi thử",
+    "comingSoon": "Sắp ra mắt",
+    "demoNote": "Chế độ chơi thử — kết quả không được lưu",
+    "close": "Đóng"
   },
   "auth": {
     "loginTitle": "Đăng nhập",

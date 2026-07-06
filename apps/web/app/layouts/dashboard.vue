@@ -7,6 +7,7 @@ const links = [
   { to: "/lessons", label: t("nav.lessons"), icon: "i-lucide-book-open" },
   { to: "/classes", label: t("nav.classes"), icon: "i-lucide-users" },
   { to: "/pupils", label: t("nav.pupils"), icon: "i-lucide-graduation-cap" },
+  { to: "/games", label: t("nav.games"), icon: "i-lucide-gamepad-2" },
 ];
 
 const initials = computed(() =>

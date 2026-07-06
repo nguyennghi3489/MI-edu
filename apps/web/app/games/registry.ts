@@ -24,16 +24,21 @@ export interface GameDef {
   component?: Component
 }
 
+// Quiz is NOT a game — it's the plain, free play mode a lesson uses when no game
+// is attached. Question types (mcq / true-false) are a separate axis entirely:
+// they're picked per question and gate bursts inside whichever game is chosen.
+export const QUIZ: GameDef = {
+  id: 'quiz',
+  name: 'Quiz',
+  description: '',
+  icon: '✓',
+  tier: 'free',
+  status: 'live',
+  component: defineAsyncComponent(() => import('./QuizGame.vue')),
+}
+
+// The 5 real games — this is what the /games catalog shows.
 export const GAMES: GameDef[] = [
-  {
-    id: 'quiz',
-    name: 'Trắc nghiệm',
-    description: 'Trả lời câu hỏi trắc nghiệm với đồng hồ đếm ngược — nhanh và quen thuộc.',
-    icon: '✓',
-    tier: 'free',
-    status: 'live',
-    component: defineAsyncComponent(() => import('./QuizGame.vue')),
-  },
   {
     id: 'space-race',
     name: 'Đua xe vũ trụ',
@@ -79,5 +84,5 @@ export const GAMES: GameDef[] = [
 // Unknown or not-yet-built formats fall back to the quiz.
 export function resolveGame(format: string | undefined): GameDef {
   const game = GAMES.find((g) => g.id === format)
-  return game?.status === 'live' && game.component ? game : GAMES[0]!
+  return game?.status === 'live' && game.component ? game : QUIZ
 }
