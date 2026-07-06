@@ -32,5 +32,11 @@ export const useAuthStore = defineStore('auth', () => {
     teacher.value = null
   }
 
-  return { token, teacher, signup, login, logout }
+  // Restores teacher (incl. plan) after a reload — the cookie only carries the token.
+  async function fetchMe() {
+    if (teacher.value || !token.value) return
+    teacher.value = await useApi<Teacher>('/api/auth/me')
+  }
+
+  return { token, teacher, signup, login, logout, fetchMe }
 })

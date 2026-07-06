@@ -16,6 +16,10 @@ export class CreateLessonDto {
   @IsString()
   @IsNotEmpty()
   gameFormat: string;
+
+  @IsOptional()
+  @IsIn([10, 20, 30])
+  gameTimeSec?: number;
 }
 
 export class UpdateLessonDto {
@@ -38,6 +42,10 @@ export class UpdateLessonDto {
   @IsString()
   @IsNotEmpty()
   gameFormat?: string;
+
+  @IsOptional()
+  @IsIn([10, 20, 30])
+  gameTimeSec?: number;
 }
 
 export class CreateQuestionDto {

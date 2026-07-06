@@ -58,6 +58,23 @@ describe('Plan limits (e2e)', () => {
     expect(res.body).toEqual(expect.objectContaining({ code: 'PLAN_LIMIT', limit: 10 }));
   });
 
+  it('free teacher: pro game rejected on lesson create and update', async () => {
+    const create = await request(app.getHttpServer())
+      .post('/api/lessons')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: 'Đua xe', subject: 'Toán', grade: '3', gameFormat: 'space-race' })
+      .expect(403);
+    expect(create.body).toEqual(expect.objectContaining({ code: 'PLAN_LIMIT' }));
+
+    const lesson = await prisma.lesson.findFirstOrThrow({ where: { teacherId } });
+    const update = await request(app.getHttpServer())
+      .patch(`/api/lessons/${lesson.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ gameFormat: 'gold-quest' })
+      .expect(403);
+    expect(update.body).toEqual(expect.objectContaining({ code: 'PLAN_LIMIT' }));
+  });
+
   it('free teacher: 11th lesson returns 403 PLAN_LIMIT at 10', async () => {
     // 1 lesson already created above — 9 more reaches the cap
     for (let i = 0; i < 9; i++) {
@@ -112,5 +129,14 @@ describe('Plan limits (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ title: 'Bài không giới hạn', subject: 'Toán', grade: '3', gameFormat: 'quiz' })
       .expect(201);
+  });
+
+  it('pro teacher: pro game + burst time accepted, gameTimeSec persisted', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/lessons')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: 'Đua xe pro', subject: 'Toán', grade: '3', gameFormat: 'space-race', gameTimeSec: 30 })
+      .expect(201);
+    expect(res.body).toEqual(expect.objectContaining({ gameFormat: 'space-race', gameTimeSec: 30 }));
   });
 });

@@ -101,11 +101,12 @@ model Lesson {
   title      String
   subject    String
   grade      String
-  gameFormat String   @map("game_format") // e.g. 'space-race', 'sniper-shot'
-  isPublic   Boolean  @default(false) @map("is_public")
-  playCount  Int      @default(0) @map("play_count")
-  isLocked   Boolean  @default(false) @map("is_locked")
-  createdAt  DateTime @default(now()) @map("created_at")
+  gameFormat  String   @map("game_format") // 'quiz' or a game id from the web registry, e.g. 'space-race'
+  gameTimeSec Int      @default(20) @map("game_time_sec") // burst length after each correct answer; unused for 'quiz'
+  isPublic    Boolean  @default(false) @map("is_public")
+  playCount   Int      @default(0) @map("play_count")
+  isLocked    Boolean  @default(false) @map("is_locked")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   questions   Question[]

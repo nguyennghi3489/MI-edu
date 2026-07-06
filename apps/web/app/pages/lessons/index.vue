@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { errorMessage } from '~/utils/errorMessage'
+import { GAMES, QUIZ } from '~/games/registry'
 
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
@@ -14,12 +15,25 @@ interface Lesson {
 }
 
 const { t } = useI18n()
+const auth = useAuthStore()
 
 const { data: lessons } = await useAsyncData(
   'lessons',
   () => useApi<Lesson[]>('/api/lessons'),
   { default: () => [] },
 )
+await useAsyncData('auth-me', () => auth.fetchMe().then(() => true))
+
+const isFreePlan = computed(() => auth.teacher?.plan === 'free')
+const gameItems = computed(() => [
+  { label: `${QUIZ.icon} ${QUIZ.name}`, value: QUIZ.id },
+  ...GAMES.map((g) => ({
+    label: `${g.icon} ${g.name}${g.status !== 'live' ? ` — ${t('games.comingSoon')}` : ''}${g.tier === 'pro' && isFreePlan.value ? ' 🔒' : ''}`,
+    value: g.id,
+    disabled: g.status !== 'live' || (g.tier === 'pro' && isFreePlan.value),
+  })),
+])
+const GAME_TIMES = [10, 20, 30]
 const search = ref('')
 const subjectFilter = ref('')
 
@@ -29,11 +43,15 @@ const error = ref('')
 const title = ref('')
 const subject = ref(SUBJECTS[0].name)
 const grade = ref('')
+const gameFormat = ref(QUIZ.id)
+const gameTimeSec = ref(20)
 
 function openAdd() {
   title.value = ''
   subject.value = SUBJECTS[0].name
   grade.value = ''
+  gameFormat.value = QUIZ.id
+  gameTimeSec.value = 20
   error.value = ''
   open.value = true
 }
@@ -44,7 +62,13 @@ async function submit() {
   try {
     const lesson = await useApi<{ id: string }>('/api/lessons', {
       method: 'POST',
-      body: { title: title.value, subject: subject.value, grade: grade.value, gameFormat: 'quiz' },
+      body: {
+        title: title.value,
+        subject: subject.value,
+        grade: grade.value,
+        gameFormat: gameFormat.value,
+        gameTimeSec: gameTimeSec.value,
+      },
     })
     open.value = false
     await navigateTo(`/lessons/${lesson.id}`)
@@ -175,6 +199,12 @@ const filtered = computed(() =>
       </UFormField>
       <UFormField :label="t('lessons.grade')">
         <UInput v-model="grade" class="w-full" placeholder="VD: 3" required />
+      </UFormField>
+      <UFormField :label="t('lessons.game')">
+        <USelect v-model="gameFormat" class="w-full" :items="gameItems" />
+      </UFormField>
+      <UFormField v-if="gameFormat !== QUIZ.id" :label="t('lessons.gameTime')">
+        <USelect v-model="gameTimeSec" class="w-full" :items="GAME_TIMES.map((s) => ({ label: `${s} giây`, value: s }))" />
       </UFormField>
     </FormModal>
   </main>

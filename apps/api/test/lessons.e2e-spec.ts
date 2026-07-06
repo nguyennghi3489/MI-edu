@@ -29,6 +29,8 @@ describe('Lessons (e2e)', () => {
       .post('/api/auth/signup')
       .send({ email, password, name: 'Cô Lan' });
     token = signup.body.accessToken;
+    // this suite's lessons use a pro game format ('space-race') — needs a pro plan since games-catalog 03
+    await prisma.teacher.update({ where: { email }, data: { plan: 'pro' } });
 
     const otherSignup = await request(app.getHttpServer())
       .post('/api/auth/signup')

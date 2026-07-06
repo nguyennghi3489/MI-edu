@@ -84,11 +84,13 @@ export class LessonsService {
   async create(teacherId: string, dto: CreateLessonDto) {
     const count = await this.prisma.lesson.count({ where: { teacherId } });
     await this.planLimits.assert(teacherId, 'lessons', count);
+    await this.planLimits.assertGameAllowed(teacherId, dto.gameFormat);
     return this.prisma.lesson.create({ data: { ...dto, teacherId } });
   }
 
   async update(teacherId: string, id: string, dto: UpdateLessonDto) {
     await this.assertOwnLesson(teacherId, id);
+    if (dto.gameFormat) await this.planLimits.assertGameAllowed(teacherId, dto.gameFormat);
     return this.prisma.lesson.update({ where: { id }, data: dto });
   }
 

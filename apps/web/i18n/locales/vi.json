@@ -75,7 +75,10 @@
     "class": "Lớp",
     "dueDate": "Hạn nộp (không bắt buộc)",
     "copyLink": "Chia sẻ link",
-    "copied": "Đã sao chép ✓"
+    "copied": "Đã sao chép ✓",
+    "game": "Trò chơi",
+    "gameTime": "Thời gian chơi sau mỗi câu đúng",
+    "proBadge": "Pro"
   },
   "classes": {
     "title": "Lớp học của tôi",
