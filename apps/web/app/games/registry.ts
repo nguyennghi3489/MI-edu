@@ -67,7 +67,8 @@ export const GAMES: GameDef[] = [
     description: 'Trả lời đúng để mở rương kho báu — vàng, mất vàng hay nhân đôi?',
     icon: '💰',
     tier: 'pro',
-    status: 'coming-soon',
+    status: 'live',
+    component: defineAsyncComponent(() => import('./GoldQuestGame.vue')),
   },
   {
     id: 'cafe',
