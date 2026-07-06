@@ -51,12 +51,18 @@ export class AssignmentsService {
       include: { lesson: { include: { _count: { select: { questions: true } } } } },
     });
     if (!assignment) throw new NotFoundException('Không tìm thấy bài giao');
+    // class-average past score — games use it to pace the ghost/opponent
+    const avg = await this.prisma.gameResult.aggregate({
+      where: { assignmentId: id },
+      _avg: { totalScore: true },
+    });
     return {
       title: assignment.lesson.title,
       subject: assignment.lesson.subject,
       questionCount: assignment.lesson._count.questions,
       gameFormat: assignment.lesson.gameFormat,
       gameTimeSec: assignment.lesson.gameTimeSec,
+      avgScore: avg._avg.totalScore,
     };
   }
 

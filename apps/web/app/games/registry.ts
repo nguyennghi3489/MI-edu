@@ -45,7 +45,8 @@ export const GAMES: GameDef[] = [
     description: 'Trả lời đúng để tăng tốc, vượt qua xe "bóng ma" và về đích trước.',
     icon: '🚀',
     tier: 'pro',
-    status: 'coming-soon',
+    status: 'live',
+    component: defineAsyncComponent(() => import('./SpaceRaceGame.vue')),
   },
   {
     id: 'gold-quest',

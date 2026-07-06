@@ -14,7 +14,11 @@
     "demo": "Chơi thử",
     "comingSoon": "Sắp ra mắt",
     "demoNote": "Chế độ chơi thử — kết quả không được lưu",
-    "close": "Đóng"
+    "close": "Đóng",
+    "you": "Bạn",
+    "ghost": "Bóng ma",
+    "steerLeft": "Sang trái",
+    "steerRight": "Sang phải"
   },
   "auth": {
     "loginTitle": "Đăng nhập",

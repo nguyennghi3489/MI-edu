@@ -7,6 +7,8 @@ interface PublicAssignment {
   subject: string
   questionCount: number
   gameFormat: string
+  gameTimeSec: number
+  avgScore: number | null
 }
 
 const route = useRoute()
@@ -17,8 +19,8 @@ const isPreview = !!previewLessonId
 
 const { data: assignment, error } = await useAsyncData(`play-${assignmentId ?? previewLessonId}`, () => {
   if (isPreview) {
-    return useApi<{ title: string; subject: string; gameFormat: string; questions: unknown[] }>(`/api/lessons/${previewLessonId}`).then(
-      (l) => ({ title: l.title, subject: l.subject, questionCount: l.questions.length, gameFormat: l.gameFormat }),
+    return useApi<{ title: string; subject: string; gameFormat: string; gameTimeSec: number; questions: unknown[] }>(`/api/lessons/${previewLessonId}`).then(
+      (l) => ({ title: l.title, subject: l.subject, questionCount: l.questions.length, gameFormat: l.gameFormat, gameTimeSec: l.gameTimeSec, avgScore: null }),
     )
   }
   return useApi<PublicAssignment>(`/api/assignments/${assignmentId}/public`)
@@ -154,6 +156,8 @@ function playAgain() {
       v-else-if="phase === 'playing'"
       :key="attempt"
       :questions="questions"
+      :game-time-sec="assignment!.gameTimeSec"
+      :ghost-score="assignment!.avgScore"
       @complete="onComplete"
     />
 
