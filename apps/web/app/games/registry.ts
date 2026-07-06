@@ -76,7 +76,8 @@ export const GAMES: GameDef[] = [
     description: 'Trả lời đúng để có món ăn, phục vụ khách trước khi họ hết kiên nhẫn.',
     icon: '☕',
     tier: 'pro',
-    status: 'coming-soon',
+    status: 'live',
+    component: defineAsyncComponent(() => import('./CafeGame.vue')),
   },
   {
     id: 'fishing-frenzy',
