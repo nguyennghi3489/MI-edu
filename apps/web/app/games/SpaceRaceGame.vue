@@ -16,6 +16,8 @@ const EFFECT_SEC = 1.5
 const SPAWN_EVERY = 0.9 // seconds between item spawns
 const ITEM_FALL = 0.55 // arena heights per second
 const WIN_BONUS = 300
+const STAR_POINTS = 20
+const ROCK_PENALTY = 10
 const LANES = 3
 const CAR_Y = 0.82 // rocket position, fraction of canvas height
 
@@ -39,6 +41,7 @@ const canvasEl = ref<HTMLCanvasElement>()
 let ctx: CanvasRenderingContext2D
 let active = false
 let distance = 0
+let bonus = 0 // points from stars/rocks, separate from distance
 let ghost = 0
 let lane = 1
 let items: Item[] = []
@@ -48,19 +51,49 @@ let spawnIn = 0
 let effectLeft = 0
 let burstEndAt = 0
 
+// --- audio: WebAudio chiptune, no asset files needed ---
+// ponytail: oscillator beeps instead of audio files; swap in real tracks if the teacher asks
+let ac: AudioContext | null = null
+let musicTimer = 0
+function beep(freq: number, dur = 0.15, type: OscillatorType = 'square', gain = 0.04, delay = 0) {
+  ac ??= new AudioContext()
+  if (ac.state === 'suspended') ac.resume()
+  const t0 = ac.currentTime + delay
+  const o = ac.createOscillator()
+  const g = ac.createGain()
+  o.type = type
+  o.frequency.value = freq
+  g.gain.setValueAtTime(gain, t0)
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + dur)
+  o.connect(g).connect(ac.destination)
+  o.start(t0)
+  o.stop(t0 + dur)
+}
+const MELODY = [262, 330, 392, 523, 392, 330] // C–E–G arpeggio loop
+function startMusic() {
+  if (musicTimer) return
+  let i = 0
+  musicTimer = window.setInterval(() => beep(MELODY[i++ % MELODY.length]!, 0.18, 'triangle', 0.03), 200)
+}
+function stopMusic() {
+  clearInterval(musicTimer)
+  musicTimer = 0
+}
+
 async function run() {
   let res
   while ((res = await props.askQuestion())) {
     if (res.correct) await burst()
   }
   const won = distance > ghost
-  // ponytail: score = distance + flat win bonus; margin-weighted scoring if it matters
-  emit('complete', { score: Math.round(distance) + (won ? WIN_BONUS : 0) })
+  // ponytail: score = distance + item bonus + flat win bonus; margin-weighted scoring if it matters
+  emit('complete', { score: Math.max(0, Math.round(distance) + bonus + (won ? WIN_BONUS : 0)) })
 }
 
 function burst() {
   return new Promise<void>((resolve) => {
     active = true
+    startMusic()
     let lastT = performance.now()
     burstEndAt = lastT + props.config.gameTimeSec * 1000
     spawnIn = 0
@@ -91,7 +124,16 @@ function burst() {
       items = items.filter((it) => {
         if (it.y > 1.1) return false
         if (it.lane === lane && Math.abs(it.y - CAR_Y) < 0.08) {
-          effect = it.kind === 'star' ? 'boost' : 'slow'
+          if (it.kind === 'star') {
+            effect = 'boost'
+            bonus += STAR_POINTS
+            beep(880, 0.1)
+            beep(1320, 0.15, 'square', 0.04, 0.08)
+          } else {
+            effect = 'slow'
+            bonus = Math.max(0, bonus - ROCK_PENALTY)
+            beep(120, 0.25, 'sawtooth', 0.06)
+          }
           effectLeft = EFFECT_SEC
           return false
         }
@@ -101,6 +143,7 @@ function burst() {
       draw()
       if (t >= burstEndAt) {
         active = false
+        stopMusic()
         draw()
         resolve()
         return
@@ -166,6 +209,8 @@ function draw() {
   ctx.font = 'bold 14px sans-serif'
   ctx.textAlign = 'left'
   ctx.fillText(`🚀 ${t('games.you')} ${Math.round(distance)}m`, 16, 22)
+  ctx.textAlign = 'center'
+  ctx.fillText(`⭐ ${bonus}`, w / 2, 22)
   ctx.textAlign = 'right'
   ctx.fillText(`👻 ${t('games.ghost')} ${Math.round(ghost)}m`, w - 16, 22)
 
@@ -221,6 +266,8 @@ onUnmounted(() => {
   window.removeEventListener('keydown', onKey)
   window.removeEventListener('resize', resizeCanvas)
   cancelAnimationFrame(raf)
+  stopMusic()
+  ac?.close()
 })
 </script>
 
